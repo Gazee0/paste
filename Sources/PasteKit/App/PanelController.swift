@@ -45,7 +45,10 @@ final class PanelController: NSObject, NSWindowDelegate {
         panel.backgroundColor = .clear
         panel.isOpaque = false
         panel.hasShadow = true
-        panel.isMovableByWindowBackground = true
+        // Do not let a drag anywhere in the palette move the window. Moving is handled by the
+        // explicit 7pt handle at the top edge; the rest of the surface — especially preview
+        // text — belongs to selection and scrolling.
+        panel.isMovableByWindowBackground = false
         panel.acceptsMouseMovedEvents = true
 
         let host = NSHostingView(rootView: RootView(model: model))

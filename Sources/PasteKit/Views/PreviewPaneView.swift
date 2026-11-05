@@ -97,15 +97,7 @@ struct PreviewPaneView: View {
                     DispatchQueue.main.async { isEditorFocused = true }
                 }
         } else {
-            ScrollView(.vertical) {
-                Text(item.text ?? "")
-                    .font(.system(size: 12.5))
-                    .lineSpacing(3)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(14)
-                    .contentShape(Rectangle())
-                    .onTapGesture { model.refocusSearch() }
-            }
+            SelectableTextView(text: item.text ?? "")
         }
     }
 

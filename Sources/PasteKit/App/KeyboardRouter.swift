@@ -76,6 +76,10 @@ final class KeyboardRouter {
         // While editing preview text, the text editor owns every other key.
         if model.isEditingPreview { return false }
 
+        // The preview's read-only NSTextView owns arrow keys, selection, and ⌘C/⌘A while it has
+        // the keyboard. Only Escape (above) remains a palette shortcut.
+        if panel.firstResponder is PreviewTextView { return false }
+
         // Command shortcuts.
         if flags == .command {
             if event.keyCode == 13 { // W
