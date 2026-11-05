@@ -16,11 +16,12 @@ struct TopBarView: View {
             PanelIconButton(
                 systemName: model.isWindowPinned ? "pin.fill" : "pin",
                 help: "窗口置顶",
+                iconSize: 11.5,
                 tint: model.isWindowPinned ? .accentColor : nil
             ) {
                 model.toggleWindowPin()
             }
-            PanelIconButton(systemName: "xmark", help: "关闭") {
+            PanelIconButton(systemName: "xmark", help: "关闭", iconSize: 11, iconOffsetY: -0.5) {
                 model.requestHide()
             }
         }
@@ -74,6 +75,8 @@ struct TopBarView: View {
         PanelIconButton(
             systemName: "eye",
             help: "预览（空格 / ⇧空格）",
+            iconSize: 11,
+            iconOffsetY: -1,
             tint: model.isPreviewVisible ? .accentColor : nil,
             isActive: model.isPreviewVisible
         ) {

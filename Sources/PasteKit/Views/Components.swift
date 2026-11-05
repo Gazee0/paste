@@ -6,6 +6,7 @@ struct PanelIconButton: View {
     private let systemName: String
     private let help: String
     private let iconSize: CGFloat
+    private let iconOffsetY: CGFloat
     private let tint: Color?
     private let isActive: Bool
     private let action: () -> Void
@@ -16,6 +17,7 @@ struct PanelIconButton: View {
         systemName: String,
         help: String,
         iconSize: CGFloat = 12,
+        iconOffsetY: CGFloat = 0,
         tint: Color? = nil,
         isActive: Bool = false,
         action: @escaping () -> Void
@@ -23,6 +25,7 @@ struct PanelIconButton: View {
         self.systemName = systemName
         self.help = help
         self.iconSize = iconSize
+        self.iconOffsetY = iconOffsetY
         self.tint = tint
         self.isActive = isActive
         self.action = action
@@ -33,6 +36,7 @@ struct PanelIconButton: View {
             Image(systemName: systemName)
                 .font(.system(size: iconSize, weight: .medium))
                 .foregroundStyle(tint ?? Color.secondary)
+                .offset(y: iconOffsetY)
                 .frame(width: 28, height: 28)
                 .background(
                     RoundedRectangle(cornerRadius: PasteMetrics.controlCornerRadius, style: .continuous)
