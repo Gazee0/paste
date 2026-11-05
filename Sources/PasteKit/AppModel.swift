@@ -36,6 +36,7 @@ final class AppModel: ObservableObject {
     var onPreviewChanged: ((Bool) -> Void)?
     var onPinChanged: ((Bool) -> Void)?
     var onHideRequested: (() -> Void)?
+    var onShowLargeImagePreview: ((ClipboardItem, NSImage) -> Void)?
 
     private let imageCache = NSCache<NSString, NSImage>()
     private var toastTask: Task<Void, Never>?
@@ -288,6 +289,17 @@ final class AppModel: ObservableObject {
     func copySelected() {
         guard let selectedItem else { return }
         copy(selectedItem)
+    }
+
+    /// Opens the standalone viewer for the selected image. The window itself is owned by the
+    /// app shell; this model method is the UI's single entry point.
+    func showLargeImagePreview() {
+        guard let item = selectedItem, item.kind == .image else { return }
+        guard let image = image(for: item) else {
+            showToast("无法载入图片")
+            return
+        }
+        onShowLargeImagePreview?(item, image)
     }
 
     func paste(_ item: ClipboardItem) {

@@ -116,19 +116,34 @@ VStack(spacing: 0) {
 ```
 The preview column has no header: its close action is the top-bar 预览 toggle (or Space/Esc).
 
-- Content for `.text`: scrollable selectable body (call `.textSelection(.enabled)`), 12.5pt,
-  preserves newlines. If `model.editingID == item.id`, show a `TextEditor` seeded with the
-  current text and focus it; footer replaces 编辑 with `取消` + `保存` (accent).
+- Content for `.text`: scrollable body, 12.5pt, preserves newlines. It is intentionally not
+  selectable/focusable so the search field keeps the keyboard. If `model.editingID == item.id`,
+  show a `TextEditor` seeded with the current text and focus it; footer replaces 编辑 with
+  `取消` + `保存` (accent).
 - Image: `Image(nsImage:)` from `model.image(for:)`, aspect-fit in available area, rounded
-  6pt, subtle border; caption `图片 · W×H` and source.
+  6pt, subtle border; caption `图片 · W×H` and source. Hovering the image shows a 查看大图
+  affordance; clicking it, or the footer 查看大图 button, calls
+  `model.showLargeImagePreview()`.
 - Files: list each file name with `doc` icon, secondary path underneath, max width truncation.
 - Footer: left time `model.timeText(for: item.createdAt)` and optional source app (truncated);
-  right `编辑` (only text, hidden while editing) and primary blue `拷贝` calling
-  `model.copy(item)`. `拷贝` disabled while editing.
+  right `编辑` (only text, hidden while editing), `查看大图` (only image), and primary blue
+  `拷贝` calling `model.copy(item)`. `拷贝` disabled while editing.
 - Editing: `model.beginEditing()`, local draft string, `model.saveEditing(text:)` (returns
   Bool; if false keep editing), `model.cancelEditing()`.
 - Empty state when selected item is nil: "选择一条记录以预览".
 - Preview is not a separate window; it is the right column of the same root.
+
+## Large image viewer (separate panel)
+
+`ImagePreviewController` owns a borderless floating `NSPanel` opened by
+`AppModel.showLargeImagePreview()`:
+
+- ~78% of the parent screen's visible frame (760–1500 × 520–940), centered, dark appearance.
+- Top bar: image dimensions/source, zoom out/in, percentage, 适应, 100%, close.
+- Canvas: aspect-fit on open, trackpad pinch zoom, drag to pan when zoomed, double-click toggles
+  fit/100%, footer hint. `Esc` or `⌘W` closes; focus returns to the search field.
+- Implementation: `Sources/PasteKit/App/ImagePreviewController.swift` and
+  `Sources/PasteKit/Views/LargeImagePreviewView.swift`.
 
 ## Keyboard
 
@@ -145,7 +160,8 @@ capsule or material with white/primary text, 11pt; optional action button if
 
 ## Rules
 
-- No extra windows, popovers, sidebars, settings, filters, or tabs beyond the above.
+- No extra windows, popovers, sidebars, settings, filters, or tabs beyond the palette and the
+  large image viewer.
 - Chinese UI copy only.
 - SwiftUI only for views; AppKit allowed for color helpers.
 - macOS 14+ APIs only.

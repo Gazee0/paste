@@ -8,6 +8,7 @@ import SwiftUI
 struct PreviewPaneView: View {
     @ObservedObject var model: AppModel
     @State private var draftText = ""
+    @State private var isImageHovered = false
     @FocusState private var isEditorFocused: Bool
 
     init(model: AppModel) {
@@ -117,16 +118,36 @@ struct PreviewPaneView: View {
                         height: item.pixelHeight.map(CGFloat.init) ?? image.size.height
                     )
                     let fitted = fittedImageSize(pixelSize, in: proxy.size)
-                    Image(nsImage: image)
-                        .resizable()
-                        .frame(width: fitted.width, height: fitted.height)
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                        .overlay {
+                    ZStack {
+                        Image(nsImage: image)
+                            .resizable()
+                            .frame(width: fitted.width, height: fitted.height)
+
+                        if isImageHovered {
                             RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                                .fill(Color.black.opacity(0.38))
+                            VStack(spacing: 5) {
+                                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                    .font(.system(size: 15, weight: .medium))
+                                Text("查看大图")
+                                    .font(.system(size: 10.5, weight: .medium))
+                            }
+                            .foregroundStyle(.white)
+                            .allowsHitTesting(false)
                         }
-                        .shadow(color: .black.opacity(0.12), radius: 10, y: 3)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                    .frame(width: fitted.width, height: fitted.height)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                    }
+                    .shadow(color: .black.opacity(0.12), radius: 10, y: 3)
+                    .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .onHover { isImageHovered = $0 }
+                    .onTapGesture { model.showLargeImagePreview() }
+                    .help("点击查看大图")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             } else {
                 VStack(spacing: 6) {
@@ -227,6 +248,8 @@ struct PreviewPaneView: View {
                 accentButton("保存") { saveDraft() }
             } else if item.kind == .text {
                 secondaryButton("编辑") { beginEditing(item) }
+            } else if item.kind == .image {
+                secondaryButton("查看大图") { model.showLargeImagePreview() }
             }
             accentButton("拷贝", isEnabled: !isEditing) { model.copy(item) }
         }

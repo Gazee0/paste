@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var panelController: PanelController?
     private var statusBar: StatusBarController?
     private var keyboardRouter: KeyboardRouter?
+    private var imagePreviewController: ImagePreviewController?
 
     private let monitor = ClipboardMonitor()
 
@@ -28,6 +29,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let panelController = PanelController(model: model)
         self.panelController = panelController
+
+        let imagePreviewController = ImagePreviewController(parentPanel: panelController.panel) { [weak self] in
+            self?.panelController?.panel.makeKeyAndOrderFront(nil)
+            self?.model?.refocusSearch()
+        }
+        self.imagePreviewController = imagePreviewController
+        model.onShowLargeImagePreview = { [weak imagePreviewController] item, image in
+            imagePreviewController?.show(item: item, image: image)
+        }
 
         statusBar = StatusBarController(
             onOpen: { [weak self] in self?.panelController?.toggle() },
@@ -56,6 +66,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         GlobalHotKeyCenter.shared.unregister()
         monitor.stop()
+        imagePreviewController?.close(restoringFocus: false)
         panelController?.persistNow()
     }
 
@@ -132,6 +143,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     model.select(item)
                 }
                 model.togglePreview()
+            case "viewer":
+                if let item = model.items.first(where: { $0.kind == .image }) {
+                    model.select(item)
+                }
+                model.showLargeImagePreview()
             case "edit":
                 if let item = model.items.first(where: { $0.kind == .text }) {
                     model.select(item)
