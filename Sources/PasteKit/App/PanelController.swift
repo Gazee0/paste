@@ -86,6 +86,7 @@ final class PanelController: NSObject, NSWindowDelegate {
         if prepare {
             model.prepareForPresentation()
         }
+        normalizeWindowSizeForCurrentMode()
         if !hasSavedPosition {
             centerOnMainScreen()
         } else {
@@ -147,11 +148,33 @@ final class PanelController: NSObject, NSWindowDelegate {
                 context.duration = Self.previewResizeDuration
                 context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
                 panel.animator().setFrame(frame, display: true)
+            } completionHandler: { [weak self] in
+                MainActor.assumeIsolated {
+                    self?.persistPosition()
+                }
             }
         } else {
             panel.setFrame(frame, display: false)
+            persistPosition()
         }
-        persistPosition()
+    }
+
+    /// The preview is always closed when the palette is presented, so make sure a frame restored
+    /// by macOS from an expanded session cannot leave the history column with a blank right side.
+    private func normalizeWindowSizeForCurrentMode() {
+        guard !isExpanded else { return }
+        let target = PasteLayout.collapsedSize
+        guard abs(panel.frame.width - target.width) > 0.5 ||
+              abs(panel.frame.height - target.height) > 0.5 else { return }
+
+        var frame = panel.frame
+        let center = NSPoint(x: frame.midX, y: frame.midY)
+        frame.size = target
+        frame.origin = NSPoint(
+            x: center.x - target.width / 2,
+            y: center.y - target.height / 2
+        )
+        panel.setFrame(constrained(frame), display: false)
     }
 
     private func constrained(_ frame: NSRect) -> NSRect {
