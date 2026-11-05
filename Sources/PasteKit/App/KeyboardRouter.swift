@@ -56,14 +56,13 @@ final class KeyboardRouter {
             .intersection(.deviceIndependentFlagsMask)
             .subtracting([.function, .numericPad])
 
-        // Escape leaves editing, then multi-select, then preview, then the query, then hides.
+        // Escape leaves editing, then multi-select, then clears the query, then hides. It never
+        // closes the preview on its own; use the top-bar eye toggle / Space / ⇧Space for that.
         if event.keyCode == 53 {
             if model.isEditingPreview {
                 model.cancelEditing()
             } else if model.isMultiSelecting {
                 model.toggleMultiSelect()
-            } else if model.isPreviewOpen {
-                model.closePreview()
             } else if !model.searchQuery.isEmpty {
                 model.searchQuery = ""
                 model.refocusSearch()

@@ -114,10 +114,13 @@ VStack(spacing: 0) {
   footer: time + source app ... 编辑 拷贝 buttons // 40pt
 }
 ```
-The preview column has no header: its close action is the top-bar 预览 toggle (or Space/Esc).
+The preview column has no header: its close action is the top-bar eye toggle (Space/⇧Space).
+`Esc` never closes the preview.
 
-- Content for `.text`: scrollable body, 12.5pt, preserves newlines. It is intentionally not
-  selectable/focusable so the search field keeps the keyboard. If `model.editingID == item.id`,
+- Content for `.text`: a read-only `NSTextView` in a scroll view, 12.5pt, preserving newlines.
+  Text is selectable for drag-selection and `⌘C`; clicking it focuses the text view, so the search
+  field only owns the keyboard until the user interacts with the preview text. If
+  `model.editingID == item.id`,
   show a `TextEditor` seeded with the current text and focus it; footer replaces 编辑 with
   `取消` + `保存` (accent).
 - Image: `Image(nsImage:)` from `model.image(for:)`, aspect-fit in available area, rounded
