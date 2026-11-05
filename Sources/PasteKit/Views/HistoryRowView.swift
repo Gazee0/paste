@@ -83,11 +83,20 @@ struct HistoryRowView: View, Equatable {
             rowContent
                 .padding(.horizontal, PasteMetrics.listInset)
                 .onHover { hovering in
+                    guard !isInteractionLocked else {
+                        isHovered = false
+                        return
+                    }
                     if hovering != isHovered {
                         isHovered = hovering
                     }
                     if hovering {
                         onHover()
+                    }
+                }
+                .onChange(of: isInteractionLocked) { _, locked in
+                    if locked {
+                        isHovered = false
                     }
                 }
                 .onTapGesture(perform: handleTap)
