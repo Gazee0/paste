@@ -123,6 +123,10 @@ final class PanelController: NSObject, NSWindowDelegate {
 
     // MARK: - Size and position
 
+    /// Slow enough to read as a deliberate window transition instead of a jump. Tune this one
+    /// value if the preview resize should feel slower or snappier.
+    private static let previewResizeDuration: TimeInterval = 0.36
+
     private func setExpanded(_ expanded: Bool) {
         guard expanded != isExpanded else { return }
         isExpanded = expanded
@@ -132,11 +136,15 @@ final class PanelController: NSObject, NSWindowDelegate {
         frame.size = size
         frame.origin = NSPoint(x: topLeft.x, y: topLeft.y - size.height)
         frame = constrained(frame)
-        // Change the frame in one shot. Animating the window while SwiftUI inserts/removes the
-        // preview makes the inner controls look like they are sliding/stretching; an instant
-        // resize keeps the list and search field visually still.
-        panel.setFrame(frame, display: true)
-        panel.contentView?.needsLayout = true
+        if panel.isVisible {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = Self.previewResizeDuration
+                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                panel.animator().setFrame(frame, display: true)
+            }
+        } else {
+            panel.setFrame(frame, display: false)
+        }
         persistPosition()
     }
 
