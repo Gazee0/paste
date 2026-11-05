@@ -92,7 +92,7 @@ struct TopBarView: View {
         .buttonStyle(.plain)
         .disabled(model.selectedItem == nil)
         .opacity(model.selectedItem == nil ? 0.45 : 1)
-        .help("预览")
+        .help("预览（空格 / ⇧空格）")
     }
 
     // MARK: - Focus

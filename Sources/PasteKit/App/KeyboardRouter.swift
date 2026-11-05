@@ -83,6 +83,14 @@ final class KeyboardRouter {
         // the keyboard. Only Escape (above) remains a palette shortcut.
         if panel.firstResponder is PreviewTextView { return false }
 
+        // Shift+Space is the preview shortcut when the search field needs plain Space for
+        // typing multi-word queries.
+        if event.keyCode == 49, flags == .shift {
+            guard !event.isARepeat else { return true }
+            model.togglePreview()
+            return true
+        }
+
         // Command shortcuts.
         if flags == .command {
             if event.keyCode == 13 { // W
