@@ -132,15 +132,11 @@ final class PanelController: NSObject, NSWindowDelegate {
         frame.size = size
         frame.origin = NSPoint(x: topLeft.x, y: topLeft.y - size.height)
         frame = constrained(frame)
-        if panel.isVisible {
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.20
-                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-                panel.animator().setFrame(frame, display: true)
-            }
-        } else {
-            panel.setFrame(frame, display: false)
-        }
+        // Change the frame in one shot. Animating the window while SwiftUI inserts/removes the
+        // preview makes the inner controls look like they are sliding/stretching; an instant
+        // resize keeps the list and search field visually still.
+        panel.setFrame(frame, display: true)
+        panel.contentView?.needsLayout = true
         persistPosition()
     }
 
