@@ -20,6 +20,10 @@ final class AppModel: ObservableObject {
     /// Whether the preview column is still on screen. It stays true through the closing
     /// animation, so the window can shrink before the list claims the freed width.
     @Published private(set) var isPreviewVisible = false
+    /// True while the window is resizing for the preview. Hover selection is suppressed during
+    /// this time because the window moves underneath a stationary pointer, which would otherwise
+    /// select several rows in quick succession while the animation is running.
+    @Published private(set) var isPreviewTransitioning = false
     @Published private(set) var isWindowPinned: Bool
     @Published private(set) var isMultiSelecting = false
     @Published private(set) var checkedIDs: Set<ClipboardItem.ID> = []
@@ -44,6 +48,7 @@ final class AppModel: ObservableObject {
     private let imageCache = NSCache<NSString, NSImage>()
     private var toastTask: Task<Void, Never>?
     private var pendingToastAction: (() -> Void)?
+    private var previewTransitionGeneration = 0
 
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -198,6 +203,18 @@ final class AppModel: ObservableObject {
         refocusSearch()
     }
 
+    @discardableResult
+    func beginPreviewWindowTransition() -> Int {
+        previewTransitionGeneration += 1
+        isPreviewTransitioning = true
+        return previewTransitionGeneration
+    }
+
+    func finishPreviewWindowTransition(generation: Int) {
+        guard generation == previewTransitionGeneration else { return }
+        isPreviewTransitioning = false
+    }
+
     /// Called by the window controller when the close animation has finished.
     func finishPreviewCollapse() {
         guard !isPreviewOpen else { return }
@@ -218,6 +235,8 @@ final class AppModel: ObservableObject {
     /// Called every time the panel is brought back after being hidden. The panel should open
     /// in its compact state with a clean search, ready for typing.
     func prepareForPresentation() {
+        previewTransitionGeneration += 1
+        isPreviewTransitioning = false
         if isPreviewOpen || isPreviewVisible {
             isPreviewOpen = false
             isPreviewVisible = false

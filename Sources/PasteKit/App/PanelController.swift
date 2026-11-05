@@ -146,9 +146,12 @@ final class PanelController: NSObject, NSWindowDelegate {
         )
         frame = constrained(frame)
 
+        let transitionGeneration = model.beginPreviewWindowTransition()
+
         guard panel.isVisible else {
             panel.setFrame(frame, display: false)
             persistPosition()
+            model.finishPreviewWindowTransition(generation: transitionGeneration)
             if !expanded {
                 model.finishPreviewCollapse()
             }
@@ -168,6 +171,7 @@ final class PanelController: NSObject, NSWindowDelegate {
             } completionHandler: { [weak self] in
                 MainActor.assumeIsolated {
                     guard let self, self.isExpanded == expanded else { return }
+                    self.model.finishPreviewWindowTransition(generation: transitionGeneration)
                     if !expanded {
                         self.model.finishPreviewCollapse()
                     }

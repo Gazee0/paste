@@ -70,7 +70,9 @@ struct HistoryListView: View {
             timeText: model.timeText(for: item.createdAt),
             showsSeparator: showsSeparator,
             onHover: {
-                guard !model.isMultiSelecting, !model.isEditingPreview else { return }
+                guard !model.isMultiSelecting,
+                      !model.isEditingPreview,
+                      !model.isPreviewTransitioning else { return }
                 model.select(item)
             },
             onClick: {
