@@ -19,7 +19,6 @@ struct PreviewPaneView: View {
         VStack(spacing: 0) {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            divider
             footer
         }
         .background(PasteTheme.background)
@@ -36,12 +35,6 @@ struct PreviewPaneView: View {
               item.id == id else { return }
         draftText = item.text ?? ""
         DispatchQueue.main.async { isEditorFocused = true }
-    }
-
-    private var divider: some View {
-        Rectangle()
-            .fill(PasteTheme.separator)
-            .frame(height: 1)
     }
 
     // MARK: - Content
@@ -204,30 +197,39 @@ struct PreviewPaneView: View {
 
     @ViewBuilder
     private var footer: some View {
-        if let item = model.previewItem {
-            HStack(spacing: 6) {
-                HStack(spacing: 5) {
-                    Text(model.timeText(for: item.createdAt))
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                    if let source = item.sourceApp, !source.isEmpty {
-                        Text(source)
+        Group {
+            if let item = model.previewItem {
+                HStack(spacing: 6) {
+                    HStack(spacing: 5) {
+                        Text(model.timeText(for: item.createdAt))
                             .font(.system(size: 10))
-                            .foregroundStyle(.tertiary)
-                            .lineLimit(1)
-                            .truncationMode(.tail)
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                        if let source = item.sourceApp, !source.isEmpty {
+                            Text(source)
+                                .font(.system(size: 10))
+                                .foregroundStyle(.tertiary)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                        }
                     }
+                    Spacer(minLength: 4)
+                    footerActions(for: item)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
-                Spacer(minLength: 4)
-                footerActions(for: item)
-                    .fixedSize(horizontal: true, vertical: false)
-            }
-            .padding(.horizontal, 12)
-            .frame(height: PasteLayout.footerHeight)
-        } else {
-            Color.clear
+                .padding(.horizontal, 12)
                 .frame(height: PasteLayout.footerHeight)
+            } else {
+                Color.clear
+                    .frame(height: PasteLayout.footerHeight)
+            }
+        }
+        // Match FooterView: the separator is drawn *inside* the 40pt footer area. A separate
+        // 1pt row above the footer made the preview footer look one point taller than the list's.
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(PasteTheme.separator)
+                .frame(height: 1)
         }
     }
 
