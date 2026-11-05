@@ -22,7 +22,7 @@ VStack(spacing: 0) {
   Divider (1px)
   HStack(spacing: 0) {
     VStack(spacing: 0) {          // width: 560
-      "最近" list header (24pt)
+      Filter bar: 全部 / 文本 / 图片 / 文件 (31pt)
       HistoryListView (flex)
       FooterView (40pt)
     }
@@ -67,9 +67,12 @@ type the Lead's `PanelController` constructs.
 
 ## History list
 
-- Header "最近", 10.5pt secondary, padded 14 leading / 8 top / 6 bottom.
-- ScrollView + LazyVStack; rows touch full width with 6pt horizontal inset and 4pt vertical
-  gap. Native overlay scrollers preferred.
+- Filter bar chips 全部 / 文本 / 图片 / 文件, 10.5pt medium; selected chip has a subtle
+  primary-tint background. Clicking a chip filters by `ClipboardKind`; ←/→ do the same while
+  the search query is empty.
+- ScrollView + VStack (non-lazy; history is capped at 200 items) so rows are not recreated at
+  the viewport edge while the preview window animates. Rows touch full width with 6pt
+  horizontal inset and 4pt vertical gap. Native overlay scrollers preferred.
 - Row (`HistoryRowView`), about 54–64pt tall, dynamic up to 2 lines:
   - Leading type icon (14pt) in a 26×26 tinted rounded square: text = `doc.text` blue,
     image = `photo` purple, files = `folder` orange.
@@ -163,8 +166,8 @@ capsule or material with white/primary text, 11pt; optional action button if
 
 ## Rules
 
-- No extra windows, popovers, sidebars, settings, filters, or tabs beyond the palette and the
-  large image viewer.
+- No extra windows, popovers, sidebars, settings, or tabs beyond the palette's inline filter
+  bar and the large image viewer.
 - Chinese UI copy only.
 - SwiftUI only for views; AppKit allowed for color helpers.
 - macOS 14+ APIs only.

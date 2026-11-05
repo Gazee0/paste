@@ -16,6 +16,7 @@ final class AppModel: ObservableObject {
         }
     }
     @Published private(set) var selectedID: ClipboardItem.ID?
+    @Published private(set) var historyFilter: HistoryFilter = .all
     @Published private(set) var isPreviewOpen = false
     /// Whether the preview column is still on screen. It stays true through the closing
     /// animation, so the window can shrink before the list claims the freed width.
@@ -84,9 +85,16 @@ final class AppModel: ObservableObject {
     // MARK: - Derived state
 
     var filteredItems: [ClipboardItem] {
+        let filteredByKind: [ClipboardItem]
+        if let kind = historyFilter.kind {
+            filteredByKind = items.filter { $0.kind == kind }
+        } else {
+            filteredByKind = items
+        }
+
         let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return items }
-        return items.filter { $0.matches(query) }
+        guard !query.isEmpty else { return filteredByKind }
+        return filteredByKind.filter { $0.matches(query) }
     }
 
     var selectedItem: ClipboardItem? {
@@ -109,6 +117,7 @@ final class AppModel: ObservableObject {
     var checkedCount: Int { checkedIDs.count }
     var hasItems: Bool { !items.isEmpty }
     var isSearching: Bool { !searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    var isFiltering: Bool { isSearching || historyFilter != .all }
     var visibleCheckedItems: [ClipboardItem] { filteredItems.filter { checkedIDs.contains($0.id) } }
 
     func isChecked(_ id: ClipboardItem.ID) -> Bool { checkedIDs.contains(id) }
@@ -174,6 +183,20 @@ final class AppModel: ObservableObject {
         }
         selectedID = rows.first?.id
         keyboardScrollNonce += 1
+    }
+
+    func cycleHistoryFilter(by delta: Int) {
+        setHistoryFilter(historyFilter.offset(by: delta))
+    }
+
+    func setHistoryFilter(_ filter: HistoryFilter) {
+        guard filter != historyFilter else {
+            refocusSearch()
+            return
+        }
+        historyFilter = filter
+        syncSelectionAfterFilterChange()
+        refocusSearch()
     }
 
     // MARK: - Preview and window chrome
@@ -246,6 +269,7 @@ final class AppModel: ObservableObject {
         isMultiSelecting = false
         checkedIDs.removeAll()
         searchQuery = ""
+        historyFilter = .all
         items = store.items
         selectedID = filteredItems.first?.id
         keyboardScrollNonce += 1

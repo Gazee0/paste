@@ -47,7 +47,7 @@ struct RootView: View {
 
     private var historyColumn: some View {
         VStack(spacing: 0) {
-            HistoryListHeader()
+            HistoryListHeader(model: model)
             HistoryListView(model: model)
                 .frame(maxHeight: .infinity)
             FooterView(model: model)

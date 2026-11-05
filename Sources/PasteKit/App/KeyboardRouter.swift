@@ -90,6 +90,19 @@ final class KeyboardRouter {
             return true
         }
 
+        // Left/right switch the kind filter while the search query is empty. With a query,
+        // arrows keep their normal text-caret behavior; clear the query (Esc) to switch again.
+        if flags.isEmpty, !model.isSearching {
+            if event.keyCode == 123 { // ←
+                model.cycleHistoryFilter(by: -1)
+                return true
+            }
+            if event.keyCode == 124 { // →
+                model.cycleHistoryFilter(by: 1)
+                return true
+            }
+        }
+
         // Command shortcuts.
         if flags == .command {
             if event.keyCode == 13 { // W

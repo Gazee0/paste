@@ -1,18 +1,36 @@
 import SwiftUI
 
-/// Small "最近" header above the history list.
+/// Compact kind filter above the history list: 全部 / 文本 / 图片 / 文件.
 struct HistoryListHeader: View {
+    @ObservedObject var model: AppModel
+
     var body: some View {
-        HStack(spacing: 0) {
-            Text("最近")
-                .font(.system(size: 10.5, weight: .medium))
-                .foregroundStyle(.secondary)
+        HStack(spacing: 2) {
+            ForEach(HistoryFilter.allCases) { filter in
+                let isSelected = model.historyFilter == filter
+                Button {
+                    model.setHistoryFilter(filter)
+                } label: {
+                    Text(filter.title)
+                        .font(.system(size: 10.5, weight: .medium))
+                        .foregroundStyle(isSelected ? Color.primary : Color.secondary)
+                        .padding(.horizontal, 7)
+                        .frame(height: 22)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(isSelected ? Color.primary.opacity(0.08) : Color.clear)
+                        )
+                        .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .help("筛选：\(filter.title)")
+            }
             Spacer(minLength: 0)
         }
-        .padding(.leading, 14)
+        .padding(.leading, 10)
         .padding(.trailing, 12)
-        .padding(.top, 8)
-        .padding(.bottom, 6)
+        .padding(.top, 5)
+        .padding(.bottom, 4)
     }
 }
 
@@ -31,7 +49,7 @@ struct HistoryListView: View {
         ScrollViewReader { proxy in
             Group {
                 if model.filteredItems.isEmpty {
-                    EmptyHistoryView(isSearching: model.isSearching && model.hasItems)
+                    EmptyHistoryView(isFiltering: model.isFiltering && model.hasItems)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     scrollList
@@ -116,20 +134,20 @@ struct HistoryListView: View {
     }
 }
 
-/// Placeholder for an empty history or a search without matches.
+/// Placeholder for an empty history or a filter/search without matches.
 private struct EmptyHistoryView: View {
-    let isSearching: Bool
+    let isFiltering: Bool
 
     var body: some View {
         VStack(spacing: 7) {
-            Image(systemName: isSearching ? "magnifyingglass" : "doc.on.clipboard")
+            Image(systemName: isFiltering ? "magnifyingglass" : "doc.on.clipboard")
                 .font(.system(size: 25, weight: .light))
                 .foregroundStyle(.tertiary)
                 .padding(.bottom, 2)
-            Text(isSearching ? "没有找到匹配的内容" : "暂无剪贴板记录")
+            Text(isFiltering ? "没有找到匹配的内容" : "暂无剪贴板记录")
                 .font(.system(size: 12.5, weight: .medium))
                 .foregroundStyle(.secondary)
-            Text(isSearching ? "换个关键词试试" : "复制任意内容后会自动出现在这里")
+            Text(isFiltering ? "换个筛选项或关键词试试" : "复制任意内容后会自动出现在这里")
                 .font(.system(size: 11))
                 .foregroundStyle(.tertiary)
         }
