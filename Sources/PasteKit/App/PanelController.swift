@@ -125,7 +125,7 @@ final class PanelController: NSObject, NSWindowDelegate {
     // MARK: - Size and position
 
     /// Slow enough to read as a deliberate window transition instead of a jump.
-    private static let previewResizeDuration: TimeInterval = 0.36
+    private static let previewResizeDuration: TimeInterval = 0.5
 
     private func setExpanded(_ expanded: Bool) {
         guard expanded != isExpanded else { return }
