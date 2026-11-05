@@ -143,19 +143,30 @@ final class PanelController: NSObject, NSWindowDelegate {
         )
         frame = constrained(frame)
 
-        if panel.isVisible {
+        guard panel.isVisible else {
+            panel.setFrame(frame, display: false)
+            persistPosition()
+            return
+        }
+
+        // Let SwiftUI lay out/display the new preview state before the window frame starts
+        // moving. Without this, the first animation frame can be drawn with the previous
+        // content size, which flashes as a missing strip on the left.
+        let targetFrame = frame
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.isExpanded == expanded else { return }
+            self.panel.contentView?.needsLayout = true
+            self.panel.contentView?.layoutSubtreeIfNeeded()
+            self.panel.displayIfNeeded()
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = Self.previewResizeDuration
                 context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-                panel.animator().setFrame(frame, display: true)
+                self.panel.animator().setFrame(targetFrame, display: true)
             } completionHandler: { [weak self] in
                 MainActor.assumeIsolated {
                     self?.persistPosition()
                 }
             }
-        } else {
-            panel.setFrame(frame, display: false)
-            persistPosition()
         }
     }
 
