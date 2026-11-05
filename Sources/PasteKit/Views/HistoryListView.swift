@@ -53,10 +53,17 @@ struct HistoryListView: View {
                     rowView(for: item, showsSeparator: index < rows.count - 1)
                 }
             }
-            .padding(.vertical, 3)
+            .padding(.top, 3)
+            // Preview expansion adds exactly this much usable height to the list. Matching it
+            // with extra scrollable room keeps the scroll offset (and therefore the rows under
+            // the cursor/keyboard selection) stable while the window animates.
+            .padding(.bottom, model.isPreviewVisible ? Self.previewHeightDelta : 3)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+
+    private static let previewHeightDelta =
+        PasteLayout.expandedSize.height - PasteLayout.collapsedSize.height
 
     private func rowView(for item: ClipboardItem, showsSeparator: Bool) -> some View {
         HistoryRowView(
