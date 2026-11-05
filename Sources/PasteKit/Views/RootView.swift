@@ -40,12 +40,6 @@ struct RootView: View {
                 RoundedRectangle(cornerRadius: PasteLayout.cornerRadius, style: .continuous)
                     .strokeBorder(PasteTheme.windowBorder, lineWidth: 1)
             }
-            .overlay(alignment: .top) {
-                WindowDragHandle()
-                    .frame(height: 7)
-                    .padding(.horizontal, 20)
-                    .accessibilityHidden(true)
-            }
         }
     }
 

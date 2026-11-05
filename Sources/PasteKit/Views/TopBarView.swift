@@ -26,6 +26,7 @@ struct TopBarView: View {
         }
         .padding(.horizontal, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(WindowDragHandle())
         .onAppear { focusSearchField() }
         .onChange(of: model.focusRequestNonce) { _, _ in focusSearchField() }
     }
