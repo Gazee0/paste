@@ -100,9 +100,6 @@ type the Lead's `PanelController` constructs.
   `model.toggleMultiSelect()`.
 - When multi-select is on: destructive `删除 N` button appears (trash icon, red), calls
   `model.deleteChecked()`; disabled when count is 0.
-- When multi-select is off: subtle `清除未固定项目` button (trash icon) calling
-  `model.clearUnpinned()`; show a confirmation alert before clearing (UI state local to
-  FooterView/RootView).
 - Right: clipboard icon + total `model.historyCount` (not filtered count), 10.5pt secondary.
   When searching, optionally show `filtered/total` but total must remain visible.
 - All controls styled flat, secondary; no default bordered buttons.
@@ -111,7 +108,7 @@ type the Lead's `PanelController` constructs.
 
 ```
 VStack(spacing: 0) {
-  header: eye icon + "预览" ... xmark (calls model.closePreview)  // 40pt
+  header: xmark only (calls model.closePreview)  // 40pt, right-aligned
   Divider
   content (text / image / files), padding 14
   Spacer

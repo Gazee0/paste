@@ -4,7 +4,6 @@ import SwiftUI
 /// total number of clips in the history (never the filtered number alone).
 struct FooterView: View {
     @ObservedObject var model: AppModel
-    @State private var isClearConfirmationPresented = false
 
     init(model: AppModel) {
         self._model = ObservedObject(wrappedValue: model)
@@ -29,15 +28,6 @@ struct FooterView: View {
                 ) {
                     model.deleteChecked()
                 }
-            } else {
-                FlatIconTextButton(
-                    title: "清除未固定项目",
-                    systemName: "trash",
-                    tint: .secondary,
-                    isEnabled: model.unpinnedCount > 0
-                ) {
-                    isClearConfirmationPresented = true
-                }
             }
 
             Spacer(minLength: 8)
@@ -57,14 +47,6 @@ struct FooterView: View {
             Rectangle()
                 .fill(PasteTheme.separator)
                 .frame(height: 1)
-        }
-        .alert("清除未固定项目？", isPresented: $isClearConfirmationPresented) {
-            Button("取消", role: .cancel) {}
-            Button("清除", role: .destructive) {
-                model.clearUnpinned()
-            }
-        } message: {
-            Text("将删除 \(model.unpinnedCount) 条未固定记录，固定项目会保留。")
         }
     }
 

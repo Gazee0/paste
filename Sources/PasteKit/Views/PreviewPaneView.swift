@@ -48,18 +48,13 @@ struct PreviewPaneView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "eye")
-                .font(.system(size: 11, weight: .medium))
-            Text("预览")
-                .font(.system(size: 11, weight: .medium))
+        HStack(spacing: 0) {
             Spacer(minLength: 0)
             PanelIconButton(systemName: "xmark", help: "关闭预览", iconSize: 10.5) {
                 model.closePreview()
             }
         }
         .foregroundStyle(.secondary)
-        .padding(.leading, 14)
         .padding(.trailing, 8)
         .frame(height: PasteLayout.previewHeaderHeight)
     }
