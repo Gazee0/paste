@@ -17,6 +17,9 @@ final class AppModel: ObservableObject {
     }
     @Published private(set) var selectedID: ClipboardItem.ID?
     @Published private(set) var isPreviewOpen = false
+    /// Whether the preview column is still on screen. It stays true through the closing
+    /// animation, so the window can shrink before the list claims the freed width.
+    @Published private(set) var isPreviewVisible = false
     @Published private(set) var isWindowPinned: Bool
     @Published private(set) var isMultiSelecting = false
     @Published private(set) var checkedIDs: Set<ClipboardItem.ID> = []
@@ -176,6 +179,7 @@ final class AppModel: ObservableObject {
             closePreview()
         } else {
             isPreviewOpen = true
+            isPreviewVisible = true
             onPreviewChanged?(true)
             refocusSearch()
         }
@@ -187,8 +191,17 @@ final class AppModel: ObservableObject {
         }
         guard isPreviewOpen else { return }
         isPreviewOpen = false
+        // Keep isPreviewVisible true until PanelController reports the shrink animation has
+        // finished. Removing the preview column immediately would make the list snap to the
+        // full window width while the window is still wide.
         onPreviewChanged?(false)
         refocusSearch()
+    }
+
+    /// Called by the window controller when the close animation has finished.
+    func finishPreviewCollapse() {
+        guard !isPreviewOpen else { return }
+        isPreviewVisible = false
     }
 
     func toggleWindowPin() {
@@ -205,8 +218,9 @@ final class AppModel: ObservableObject {
     /// Called every time the panel is brought back after being hidden. The panel should open
     /// in its compact state with a clean search, ready for typing.
     func prepareForPresentation() {
-        if isPreviewOpen {
+        if isPreviewOpen || isPreviewVisible {
             isPreviewOpen = false
+            isPreviewVisible = false
             onPreviewChanged?(false)
         }
         editingID = nil

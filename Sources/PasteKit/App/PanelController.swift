@@ -146,6 +146,9 @@ final class PanelController: NSObject, NSWindowDelegate {
         guard panel.isVisible else {
             panel.setFrame(frame, display: false)
             persistPosition()
+            if !expanded {
+                model.finishPreviewCollapse()
+            }
             return
         }
 
@@ -161,7 +164,11 @@ final class PanelController: NSObject, NSWindowDelegate {
                 self.panel.animator().setFrame(targetFrame, display: true)
             } completionHandler: { [weak self] in
                 MainActor.assumeIsolated {
-                    self?.persistPosition()
+                    guard let self, self.isExpanded == expanded else { return }
+                    if !expanded {
+                        self.model.finishPreviewCollapse()
+                    }
+                    self.persistPosition()
                 }
             }
         }

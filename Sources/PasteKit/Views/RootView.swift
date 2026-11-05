@@ -14,7 +14,7 @@ struct RootView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let previewOpen = model.isPreviewOpen
+            let previewOpen = model.isPreviewVisible
             let contentHeight = max(0, proxy.size.height - PasteLayout.topBarHeight - 1)
 
             VStack(spacing: 0) {

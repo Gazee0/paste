@@ -79,12 +79,12 @@ struct TopBarView: View {
                 Text("预览")
                     .font(.system(size: 11, weight: .medium))
             }
-            .foregroundStyle(Color.primary.opacity(model.isPreviewOpen ? 1 : 0.8))
+            .foregroundStyle(Color.primary.opacity(model.isPreviewVisible ? 1 : 0.8))
             .padding(.horizontal, 9)
             .frame(height: 28)
             .background(
                 RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(model.isPreviewOpen ? Color.primary.opacity(0.10) : PasteTheme.controlFill)
+                    .fill(model.isPreviewVisible ? Color.primary.opacity(0.10) : PasteTheme.controlFill)
             )
             .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
         }
