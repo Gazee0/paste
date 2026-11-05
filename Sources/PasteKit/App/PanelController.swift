@@ -155,9 +155,6 @@ final class PanelController: NSObject, NSWindowDelegate {
         let targetFrame = frame
         DispatchQueue.main.async { [weak self] in
             guard let self, self.isExpanded == expanded else { return }
-            self.panel.contentView?.needsLayout = true
-            self.panel.contentView?.layoutSubtreeIfNeeded()
-            self.panel.displayIfNeeded()
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = Self.previewResizeDuration
                 context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)

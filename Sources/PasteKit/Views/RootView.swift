@@ -2,8 +2,9 @@ import SwiftUI
 
 /// The whole palette surface, hosted by `PanelController` inside the borderless `NSPanel`.
 ///
-/// Layout is fixed in points: a 560pt history column and, when open, a 284pt preview column
-/// to its right. The window controller animates the panel frame; the content just fills it.
+/// The history column is 560pt and the preview is a fixed 284pt column drawn as an overlay to
+/// its right. Keeping the preview out of the HStack's intrinsic width lets the window animate
+/// its width; the preview is revealed as the window grows instead of being squashed/reflowed.
 struct RootView: View {
     @ObservedObject var model: AppModel
 
@@ -12,32 +13,39 @@ struct RootView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            TopBarView(model: model)
-                .frame(height: PasteLayout.topBarHeight)
-            Hairline()
-            HStack(spacing: 0) {
-                historyColumn
-                    .frame(width: PasteLayout.historyWidth)
-                if model.isPreviewOpen {
-                    previewColumn
-                        .frame(width: PasteLayout.previewWidth)
+        GeometryReader { proxy in
+            let previewOpen = model.isPreviewOpen
+            let contentHeight = max(0, proxy.size.height - PasteLayout.topBarHeight - 1)
+
+            VStack(spacing: 0) {
+                TopBarView(model: model)
+                    .frame(height: PasteLayout.topBarHeight)
+                Hairline()
+                ZStack(alignment: .topLeading) {
+                    historyColumn
+                        .frame(width: previewOpen ? PasteLayout.historyWidth : proxy.size.width)
+                    if previewOpen {
+                        previewColumn
+                            .frame(width: PasteLayout.previewWidth, height: contentHeight)
+                            .offset(x: PasteLayout.historyWidth)
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .clipped()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(PasteTheme.background)
-        .clipShape(RoundedRectangle(cornerRadius: PasteLayout.cornerRadius, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: PasteLayout.cornerRadius, style: .continuous)
-                .strokeBorder(PasteTheme.windowBorder, lineWidth: 1)
-        }
-        .overlay(alignment: .top) {
-            WindowDragHandle()
-                .frame(height: 7)
-                .padding(.horizontal, 20)
-                .accessibilityHidden(true)
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .background(PasteTheme.background)
+            .clipShape(RoundedRectangle(cornerRadius: PasteLayout.cornerRadius, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: PasteLayout.cornerRadius, style: .continuous)
+                    .strokeBorder(PasteTheme.windowBorder, lineWidth: 1)
+            }
+            .overlay(alignment: .top) {
+                WindowDragHandle()
+                    .frame(height: 7)
+                    .padding(.horizontal, 20)
+                    .accessibilityHidden(true)
+            }
         }
     }
 
