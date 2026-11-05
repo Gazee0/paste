@@ -7,7 +7,6 @@ enum PasteLayout {
     static let previewWidth: CGFloat = 284
     static let topBarHeight: CGFloat = 48
     static let footerHeight: CGFloat = 40
-    static let previewHeaderHeight: CGFloat = 40
     static let cornerRadius: CGFloat = 12
 
     static let collapsedSize = CGSize(width: historyWidth, height: 420)

@@ -108,14 +108,13 @@ type the Lead's `PanelController` constructs.
 
 ```
 VStack(spacing: 0) {
-  header: xmark only (calls model.closePreview)  // 40pt, right-aligned
-  Divider
   content (text / image / files), padding 14
   Spacer
   Divider
   footer: time + source app ... 编辑 拷贝 buttons // 40pt
 }
 ```
+The preview column has no header: its close action is the top-bar 预览 toggle (or Space/Esc).
 
 - Content for `.text`: scrollable selectable body (call `.textSelection(.enabled)`), 12.5pt,
   preserves newlines. If `model.editingID == item.id`, show a `TextEditor` seeded with the

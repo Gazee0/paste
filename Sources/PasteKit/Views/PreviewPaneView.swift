@@ -16,8 +16,6 @@ struct PreviewPaneView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            header
-            divider
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             divider
@@ -43,20 +41,6 @@ struct PreviewPaneView: View {
         Rectangle()
             .fill(PasteTheme.separator)
             .frame(height: 1)
-    }
-
-    // MARK: - Header
-
-    private var header: some View {
-        HStack(spacing: 0) {
-            Spacer(minLength: 0)
-            PanelIconButton(systemName: "xmark", help: "关闭预览", iconSize: 10.5) {
-                model.closePreview()
-            }
-        }
-        .foregroundStyle(.secondary)
-        .padding(.trailing, 8)
-        .frame(height: PasteLayout.previewHeaderHeight)
     }
 
     // MARK: - Content
