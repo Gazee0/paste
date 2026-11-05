@@ -7,6 +7,7 @@ struct PanelIconButton: View {
     private let help: String
     private let iconSize: CGFloat
     private let tint: Color?
+    private let isActive: Bool
     private let action: () -> Void
 
     @State private var isHovered = false
@@ -16,12 +17,14 @@ struct PanelIconButton: View {
         help: String,
         iconSize: CGFloat = 12,
         tint: Color? = nil,
+        isActive: Bool = false,
         action: @escaping () -> Void
     ) {
         self.systemName = systemName
         self.help = help
         self.iconSize = iconSize
         self.tint = tint
+        self.isActive = isActive
         self.action = action
     }
 
@@ -33,7 +36,7 @@ struct PanelIconButton: View {
                 .frame(width: 28, height: 28)
                 .background(
                     RoundedRectangle(cornerRadius: PasteMetrics.controlCornerRadius, style: .continuous)
-                        .fill(isHovered ? Color.primary.opacity(0.07) : Color.clear)
+                        .fill(isActive ? Color.primary.opacity(0.08) : (isHovered ? Color.primary.opacity(0.07) : Color.clear))
                 )
                 .contentShape(RoundedRectangle(cornerRadius: PasteMetrics.controlCornerRadius, style: .continuous))
         }

@@ -71,28 +71,16 @@ struct TopBarView: View {
     // MARK: - Trailing controls
 
     private var previewButton: some View {
-        Button {
+        PanelIconButton(
+            systemName: "eye",
+            help: "预览（空格 / ⇧空格）",
+            tint: model.isPreviewVisible ? .accentColor : nil,
+            isActive: model.isPreviewVisible
+        ) {
             model.togglePreview()
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: "eye")
-                    .font(.system(size: 11, weight: .medium))
-                Text("预览")
-                    .font(.system(size: 11, weight: .medium))
-            }
-            .foregroundStyle(Color.primary.opacity(model.isPreviewVisible ? 1 : 0.8))
-            .padding(.horizontal, 9)
-            .frame(height: 28)
-            .background(
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(model.isPreviewVisible ? Color.primary.opacity(0.10) : PasteTheme.controlFill)
-            )
-            .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
         }
-        .buttonStyle(.plain)
         .disabled(model.selectedItem == nil)
         .opacity(model.selectedItem == nil ? 0.45 : 1)
-        .help("预览（空格 / ⇧空格）")
     }
 
     // MARK: - Focus
