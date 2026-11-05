@@ -66,14 +66,18 @@ enum PasteTarget {
     }
 
     /// Returns `.pasted` only when the key event was actually handed to a target app.
-    static func paste(rememberedSource: String? = nil) -> PasteOutcome {
+    /// `keepWindowVisible` is used for a pinned palette: paste still targets the remembered app,
+    /// but the floating panel is not hidden.
+    static func paste(rememberedSource: String? = nil, keepWindowVisible: Bool = false) -> PasteOutcome {
         guard let target = target(rememberedSource: rememberedSource) else { return .noTarget }
         guard AXIsProcessTrusted() else {
             requestAccessibility()
             return .needsPermission
         }
 
-        NSApp.hide(nil)
+        if !keepWindowVisible {
+            NSApp.hide(nil)
+        }
         target.activate(options: [.activateAllWindows])
         waitUntilFrontmost(target) { frontmost in
             guard frontmost else { return }

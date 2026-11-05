@@ -67,6 +67,9 @@ final class KeyboardRouter {
             } else if !model.searchQuery.isEmpty {
                 model.searchQuery = ""
                 model.refocusSearch()
+            } else if model.isWindowPinned {
+                // A pinned palette is deliberately persistent: Escape must not hide it.
+                model.refocusSearch()
             } else {
                 model.requestHide()
             }

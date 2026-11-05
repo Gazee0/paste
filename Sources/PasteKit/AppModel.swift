@@ -323,7 +323,10 @@ final class AppModel: ObservableObject {
         }
         monitor.acknowledgeOwnWrite()
 
-        let outcome = PasteTarget.paste(rememberedSource: item.sourceApp)
+        let outcome = PasteTarget.paste(
+            rememberedSource: item.sourceApp,
+            keepWindowVisible: isWindowPinned
+        )
         switch outcome {
         case .pasted:
             break
@@ -336,7 +339,11 @@ final class AppModel: ObservableObject {
         case .noTarget, .notDelivered, .copyFailed:
             showToast(outcome.message)
         }
-        refocusSearch()
+        // When the palette is pinned and the target app comes forward, do not steal focus back
+        // from it. The panel remains visible and can be clicked to focus the search again.
+        if !isWindowPinned || outcome != .pasted {
+            refocusSearch()
+        }
     }
 
     func pasteSelected() {
