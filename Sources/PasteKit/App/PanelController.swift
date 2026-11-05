@@ -123,19 +123,25 @@ final class PanelController: NSObject, NSWindowDelegate {
 
     // MARK: - Size and position
 
-    /// Slow enough to read as a deliberate window transition instead of a jump. Tune this one
-    /// value if the preview resize should feel slower or snappier.
+    /// Slow enough to read as a deliberate window transition instead of a jump.
     private static let previewResizeDuration: TimeInterval = 0.36
 
     private func setExpanded(_ expanded: Bool) {
         guard expanded != isExpanded else { return }
         isExpanded = expanded
+
         let size = expanded ? PasteLayout.expandedSize : PasteLayout.collapsedSize
         var frame = panel.frame
-        let topLeft = NSPoint(x: frame.minX, y: frame.maxY)
+        // Grow/shrink around the window center instead of pinning the left edge. This keeps the
+        // motion balanced and avoids the “everything is being pushed to the right” feeling.
+        let center = NSPoint(x: frame.midX, y: frame.midY)
         frame.size = size
-        frame.origin = NSPoint(x: topLeft.x, y: topLeft.y - size.height)
+        frame.origin = NSPoint(
+            x: center.x - size.width / 2,
+            y: center.y - size.height / 2
+        )
         frame = constrained(frame)
+
         if panel.isVisible {
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = Self.previewResizeDuration
