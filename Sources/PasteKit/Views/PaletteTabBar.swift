@@ -26,14 +26,36 @@ struct PaletteTabBar: View {
                 .help(tab == .clipboard ? "剪贴板历史" : "快贴")
             }
             Spacer(minLength: 0)
-            Text("Tab")
-                .font(.system(size: 9.5, weight: .medium))
-                .foregroundStyle(.tertiary)
-                .padding(.trailing, 2)
-                .help("按 Tab 切换")
+            previewButton
+            PanelIconButton(
+                systemName: model.isWindowPinned ? "pin.fill" : "pin",
+                help: "窗口置顶",
+                iconSize: 11.5,
+                tint: model.isWindowPinned ? .accentColor : nil
+            ) {
+                model.toggleWindowPin()
+            }
+            PanelIconButton(systemName: "xmark", help: "关闭", iconSize: 11, iconOffsetY: -0.5) {
+                model.requestHide()
+            }
         }
         .padding(.horizontal, 12)
         .frame(height: PasteLayout.tabBarHeight)
         .background(WindowDragHandle())
+    }
+
+    private var previewButton: some View {
+        PanelIconButton(
+            systemName: "eye",
+            help: "预览（空格 / ⇧空格）",
+            iconSize: 11,
+            iconOffsetY: -1,
+            tint: model.isPreviewVisible ? .accentColor : nil,
+            isActive: model.isPreviewVisible
+        ) {
+            model.togglePreview()
+        }
+        .disabled(!model.currentSelectionExists)
+        .opacity(model.currentSelectionExists ? 1 : 0.45)
     }
 }

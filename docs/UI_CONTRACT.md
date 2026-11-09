@@ -19,8 +19,8 @@ including `AppModel.swift`. Do not edit any other file. Don't add a second `@mai
 
 ```
 VStack(spacing: 0) {
-  PaletteTabBar(height: 36)       // 剪贴板 / 快贴, Tab key switches
-  TopBarView(height: 48)         // search + preview + pin + close, spans full width
+  PaletteTabBar(height: 36)       // 剪贴板 / 快贴 left; eye/pin/close right; Tab switches
+  TopBarView(height: 48)         // search field only, spans full width
   Divider (1px)
   HStack(spacing: 0) {
     VStack(spacing: 0) {          // width: 560
