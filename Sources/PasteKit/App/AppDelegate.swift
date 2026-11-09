@@ -138,6 +138,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     model.select(item)
                 }
                 model.togglePreview()
+            case "preview-delayed":
+                if let item = model.items.first(where: { $0.kind == .text }) {
+                    model.select(item)
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    model.togglePreview()
+                }
             case "preview-image":
                 if let item = model.items.first(where: { $0.kind == .image }) {
                     model.select(item)

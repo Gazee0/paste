@@ -171,11 +171,24 @@ final class PanelController: NSObject, NSWindowDelegate {
             } completionHandler: { [weak self] in
                 MainActor.assumeIsolated {
                     guard let self, self.isExpanded == expanded else { return }
-                    self.model.finishPreviewWindowTransition(generation: transitionGeneration)
-                    if !expanded {
-                        self.model.finishPreviewCollapse()
+                    // NSWindow's animator can report completion on a frame where the backing
+                    // content has not quite caught up with the final frame. Commit the exact
+                    // target and flush the view tree before releasing hover/layout state; this
+                    // removes the tiny "pause then grow again" at the end of the transition.
+                    self.panel.setFrame(targetFrame, display: true)
+                    self.panel.contentView?.layoutSubtreeIfNeeded()
+                    self.panel.displayIfNeeded()
+
+                    // Let that final frame render before changing SwiftUI state (which unlocks
+                    // hover and, on close, removes the preview column).
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self, self.isExpanded == expanded else { return }
+                        self.model.finishPreviewWindowTransition(generation: transitionGeneration)
+                        if !expanded {
+                            self.model.finishPreviewCollapse()
+                        }
+                        self.persistPosition()
                     }
-                    self.persistPosition()
                 }
             }
         }
