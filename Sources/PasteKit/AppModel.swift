@@ -24,6 +24,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var quickSnippets: [QuickSnippet] = []
     @Published private(set) var selectedQuickID: QuickSnippet.ID?
     @Published private(set) var quickFolderSelection: QuickFolderSelection = .all
+    @Published private(set) var quickFocusZone: QuickFocusZone = .list
     @Published var quickEditorDraft: QuickEditorDraft?
     @Published private(set) var isPreviewOpen = false
     /// Whether the preview column is still on screen. It stays true through the closing
@@ -230,6 +231,10 @@ final class AppModel: ObservableObject {
     func moveSelection(by delta: Int) {
         guard !isEditingPreview else { return }
         if activeTab == .quick {
+            if quickFocusZone == .folders {
+                moveQuickFolderSelection(by: delta)
+                return
+            }
             let rows = quickFilteredSnippets
             guard !rows.isEmpty else { return }
             if let selectedQuickID, let index = rows.firstIndex(where: { $0.id == selectedQuickID }) {
@@ -293,6 +298,7 @@ final class AppModel: ObservableObject {
         }
         editingID = nil
         quickEditorDraft = nil
+        quickFocusZone = .list
         activeTab = tab
         searchQuery = ""
         if tab == .quick {
@@ -315,6 +321,21 @@ final class AppModel: ObservableObject {
         selectedQuickID = quickFilteredSnippets.first?.id
         keyboardScrollNonce += 1
         refocusSearch()
+    }
+
+    func setQuickFocusZone(_ zone: QuickFocusZone) {
+        guard zone != quickFocusZone else { return }
+        quickFocusZone = zone
+        refocusSearch()
+    }
+
+    private func moveQuickFolderSelection(by delta: Int) {
+        let choices = quickFolderChoices
+        guard !choices.isEmpty else { return }
+        let currentIndex = choices.firstIndex(of: quickFolderSelection) ?? 0
+        let next = min(max(currentIndex + delta, 0), choices.count - 1)
+        guard next != currentIndex else { return }
+        setQuickFolder(choices[next])
     }
 
     func cycleQuickFolder(by delta: Int) {
@@ -413,6 +434,7 @@ final class AppModel: ObservableObject {
         searchQuery = ""
         historyFilter = .all
         quickFolderSelection = .all
+        quickFocusZone = .list
         items = store.items
         quickFolders = quickStore.folders
         quickSnippets = quickStore.snippets
@@ -505,6 +527,7 @@ final class AppModel: ObservableObject {
             quickFolderSelection = saved.folderID.map { .folder($0) } ?? .uncategorized
         }
         quickEditorDraft = nil
+        quickFocusZone = .list
         refreshQuick(select: saved.id)
         if isPreviewOpen {
             ensurePreviewMatchesSelection()
@@ -536,6 +559,7 @@ final class AppModel: ObservableObject {
         }
         refreshQuick(select: nil)
         quickFolderSelection = .folder(folder.id)
+        quickFocusZone = .folders
         selectedQuickID = quickFilteredSnippets.first?.id
         keyboardScrollNonce += 1
         showToast("已新建文件夹")

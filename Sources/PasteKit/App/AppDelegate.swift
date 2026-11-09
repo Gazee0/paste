@@ -170,6 +170,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             case "quick-edit":
                 model.setActiveTab(.quick)
                 model.beginNewQuickSnippet()
+            case "quick-folders":
+                model.setActiveTab(.quick)
+                model.setQuickFocusZone(.folders)
             default:
                 break
             }

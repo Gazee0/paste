@@ -173,6 +173,9 @@ capsule or material with white/primary text, 11pt; optional action button if
   footer. The search field is shared and clears when switching tabs.
 - Snippets have content, optional note, and folder. Footer 新建 opens the editor sheet;
   context menu supports edit/copy/paste/delete; double-click/Return paste.
+- Keyboard focus has two zones. Up/down move list selection by default; `←` enters the folder
+  sidebar and `→` returns to the list. In the folder zone up/down change the selected folder.
+  The focused zone is indicated by an accent outline.
 - The right preview pane is the same size and shares the same show/hide state as the clipboard
   preview. Quick snippet copy uses the same paste-target flow as clipboard text.
 

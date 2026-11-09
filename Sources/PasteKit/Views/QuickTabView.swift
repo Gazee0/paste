@@ -8,12 +8,18 @@ struct QuickTabView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                QuickFolderSidebar(model: model)
-                    .frame(width: PasteLayout.quickFolderSidebarWidth)
+                QuickFolderSidebar(
+                    model: model,
+                    isKeyboardFocused: model.quickFocusZone == .folders
+                )
+                .frame(width: PasteLayout.quickFolderSidebarWidth)
                 Rectangle()
                     .fill(PasteTheme.separator)
                     .frame(width: 1)
-                QuickSnippetListView(model: model)
+                QuickSnippetListView(
+                    model: model,
+                    isKeyboardFocused: model.quickFocusZone == .list
+                )
             }
             .frame(maxHeight: .infinity)
             QuickFooterView(model: model)
@@ -25,6 +31,7 @@ struct QuickTabView: View {
 
 private struct QuickFolderSidebar: View {
     @ObservedObject var model: AppModel
+    let isKeyboardFocused: Bool
     @State private var showingNewFolder = false
     @State private var newFolderName = ""
     @State private var folderToDelete: QuickFolder?
@@ -104,6 +111,7 @@ private struct QuickFolderSidebar: View {
         let count = model.quickCount(in: selection)
         return Button {
             model.setQuickFolder(selection)
+            model.setQuickFocusZone(.folders)
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: selection == .all ? "tray.full" : (selection == .uncategorized ? "tray" : "folder"))
@@ -125,8 +133,18 @@ private struct QuickFolderSidebar: View {
             .frame(height: 27)
             .background(
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(isSelected ? Color.primary.opacity(0.07) : Color.clear)
+                    .fill(
+                        isSelected
+                            ? (isKeyboardFocused ? Color.accentColor.opacity(0.10) : Color.primary.opacity(0.07))
+                            : Color.clear
+                    )
             )
+            .overlay {
+                if isSelected && isKeyboardFocused {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(Color.accentColor.opacity(0.40), lineWidth: 1)
+                }
+            }
             .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -138,6 +156,7 @@ private struct QuickFolderSidebar: View {
 
 private struct QuickSnippetListView: View {
     @ObservedObject var model: AppModel
+    let isKeyboardFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -170,11 +189,13 @@ private struct QuickSnippetListView: View {
                                     snippet: snippet,
                                     folderTitle: model.quickFolderTitle(for: snippet),
                                     isSelected: model.selectedQuickID == snippet.id,
+                                    isKeyboardFocused: isKeyboardFocused,
                                     shortcutIndex: model.quickShortcutIndex(for: snippet),
                                     timeText: model.timeText(for: snippet.updatedAt),
                                     onHover: { model.selectQuick(snippet) },
                                     onClick: {
                                         model.selectQuick(snippet)
+                                        model.setQuickFocusZone(.list)
                                         model.refocusSearch()
                                     },
                                     onDoubleClick: { model.pasteQuick(snippet) },
@@ -209,6 +230,7 @@ private struct QuickSnippetRowView: View {
     let snippet: QuickSnippet
     let folderTitle: String
     let isSelected: Bool
+    let isKeyboardFocused: Bool
     let shortcutIndex: Int?
     let timeText: String
     let onHover: () -> Void
@@ -281,6 +303,12 @@ private struct QuickSnippetRowView: View {
                 RoundedRectangle(cornerRadius: PasteMetrics.rowCornerRadius, style: .continuous)
                     .fill(isSelected || isHovered ? PasteTheme.rowHighlight : Color.clear)
             )
+            .overlay {
+                if isSelected && isKeyboardFocused {
+                    RoundedRectangle(cornerRadius: PasteMetrics.rowCornerRadius, style: .continuous)
+                        .strokeBorder(Color.accentColor.opacity(0.32), lineWidth: 1)
+                }
+            }
             .contentShape(RoundedRectangle(cornerRadius: PasteMetrics.rowCornerRadius, style: .continuous))
             .onHover { hovering in
                 isHovered = hovering

@@ -53,6 +53,12 @@ enum QuickFolderSelection: Equatable, Hashable {
     }
 }
 
+/// Which quick-tab region currently owns the up/down keys.
+enum QuickFocusZone {
+    case folders
+    case list
+}
+
 /// Two top-level modes of the palette.
 enum PaletteTab: String, CaseIterable, Identifiable {
     case clipboard

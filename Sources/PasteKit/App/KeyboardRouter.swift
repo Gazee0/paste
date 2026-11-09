@@ -102,7 +102,8 @@ final class KeyboardRouter {
         if flags.isEmpty, !model.isSearching {
             if event.keyCode == 123 { // ←
                 if model.activeTab == .quick {
-                    model.cycleQuickFolder(by: -1)
+                    // ← moves focus from the snippet list into the folder sidebar.
+                    model.setQuickFocusZone(.folders)
                 } else {
                     model.cycleHistoryFilter(by: -1)
                 }
@@ -110,7 +111,8 @@ final class KeyboardRouter {
             }
             if event.keyCode == 124 { // →
                 if model.activeTab == .quick {
-                    model.cycleQuickFolder(by: 1)
+                    // → returns focus from the folder sidebar to the snippet list.
+                    model.setQuickFocusZone(.list)
                 } else {
                     model.cycleHistoryFilter(by: 1)
                 }
@@ -162,6 +164,12 @@ final class KeyboardRouter {
             return false
         case 36, 76: // ↩ / keypad enter
             guard !event.isARepeat else { return true }
+            if model.activeTab == .quick, model.quickFocusZone == .folders {
+                // Return focus to the list rather than pasting while the folder sidebar owns
+                // the keyboard.
+                model.setQuickFocusZone(.list)
+                return true
+            }
             if model.isMultiSelecting {
                 return true
             }
