@@ -55,7 +55,9 @@ struct PaletteTabBar: View {
         ) {
             model.togglePreview()
         }
-        .disabled(!model.currentSelectionExists)
-        .opacity(model.currentSelectionExists ? 1 : 0.45)
+        // Keep the close action available if the preview is open while the current tab has
+        // no selectable item; otherwise there is nothing to show.
+        .disabled(!model.currentSelectionExists && !model.isPreviewOpen)
+        .opacity(model.currentSelectionExists || model.isPreviewOpen ? 1 : 0.45)
     }
 }

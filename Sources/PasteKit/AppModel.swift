@@ -301,9 +301,8 @@ final class AppModel: ObservableObject {
             selectedID = filteredItems.first?.id
         }
         keyboardScrollNonce += 1
-        if isPreviewOpen && !currentSelectionExists {
-            closePreview()
-        }
+        // Keep the preview's shown/hidden state across tabs. If the target tab has no
+        // selection, the preview column shows its empty placeholder until one is available.
         refocusSearch()
     }
 
@@ -343,15 +342,15 @@ final class AppModel: ObservableObject {
     // MARK: - Preview and window chrome
 
     func togglePreview() {
-        guard currentSelectionExists else { return }
         if isPreviewOpen {
             closePreview()
-        } else {
-            isPreviewOpen = true
-            isPreviewVisible = true
-            onPreviewChanged?(true)
-            refocusSearch()
+            return
         }
+        guard currentSelectionExists else { return }
+        isPreviewOpen = true
+        isPreviewVisible = true
+        onPreviewChanged?(true)
+        refocusSearch()
     }
 
     func closePreview() {
