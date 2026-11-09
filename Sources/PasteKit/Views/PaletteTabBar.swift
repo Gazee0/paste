@@ -42,6 +42,9 @@ struct PaletteTabBar: View {
         .padding(.horizontal, 12)
         .frame(height: PasteLayout.tabBarHeight)
         .background(WindowDragHandle())
+        .overlay(alignment: .bottom) {
+            Hairline()
+        }
     }
 
     private var previewButton: some View {
