@@ -36,7 +36,7 @@ struct TopBarView: View {
 
     private var searchField: some View {
         HStack(spacing: 6) {
-            TextField("搜索拷贝的文本", text: $model.searchQuery)
+            TextField(model.activeTab == .quick ? "搜索快贴" : "搜索剪贴板", text: $model.searchQuery)
                 .textFieldStyle(.plain)
                 .font(.system(size: 12))
                 .focused($isSearchFocused)
@@ -82,8 +82,8 @@ struct TopBarView: View {
         ) {
             model.togglePreview()
         }
-        .disabled(model.selectedItem == nil)
-        .opacity(model.selectedItem == nil ? 0.45 : 1)
+        .disabled(!model.currentSelectionExists)
+        .opacity(model.currentSelectionExists ? 1 : 0.45)
     }
 
     // MARK: - Focus

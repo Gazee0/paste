@@ -162,6 +162,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             case "search":
                 model.searchQuery = "account"
                 if let item = model.filteredItems.first { model.select(item) }
+            case "quick":
+                model.setActiveTab(.quick)
+            case "quick-preview":
+                model.setActiveTab(.quick)
+                model.togglePreview()
+            case "quick-edit":
+                model.setActiveTab(.quick)
+                model.beginNewQuickSnippet()
             default:
                 break
             }

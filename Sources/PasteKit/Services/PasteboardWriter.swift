@@ -42,4 +42,20 @@ enum PasteboardWriter {
 
         return pasteboard.changeCount
     }
+    /// Writes plain text for a quick snippet. Returns the change count, or nil if the text was
+    /// empty.
+    @discardableResult
+    static func writeText(
+        _ text: String,
+        to pasteboard: NSPasteboard = .general
+    ) -> Int? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        pasteboard.clearContents()
+        let item = NSPasteboardItem()
+        item.setString(text, forType: .string)
+        guard pasteboard.writeObjects([item]) else { return nil }
+        return pasteboard.changeCount
+    }
+
 }

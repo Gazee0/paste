@@ -1,7 +1,8 @@
 # Paste UI contract
 
 The app is a menu-bar clipboard palette. The window is a custom borderless `NSPanel`; the
-SwiftUI root fills it. The panel is **560×420 collapsed** and **844×504 with preview open**.
+SwiftUI root fills it. The panel is **560×456 collapsed** and **844×540 with preview open**. A 36pt tab bar
+(剪贴板 / 快贴) sits above the search field.
 When the preview opens the extra width/height goes to the right and bottom; the top-left stays
 put. The left history column is always 560pt wide.
 
@@ -18,6 +19,7 @@ including `AppModel.swift`. Do not edit any other file. Don't add a second `@mai
 
 ```
 VStack(spacing: 0) {
+  PaletteTabBar(height: 36)       // 剪贴板 / 快贴, Tab key switches
   TopBarView(height: 48)         // search + preview + pin + close, spans full width
   Divider (1px)
   HStack(spacing: 0) {
@@ -164,10 +166,20 @@ capsule or material with white/primary text, 11pt; optional action button if
 `toast.actionTitle != nil` calling `model.performToastAction()`; tap/close dismisses via
 `model.dismissToast()`. Animate with opacity/offset. Don't let it block row interaction.
 
+## Quick tab
+
+- Tab bar switches between clipboard history and quick snippets with Tab / ⇧Tab.
+- Quick tab: 148pt folder sidebar (全部 / 未分类 / custom folders) + snippet list + 40pt
+  footer. The search field is shared and clears when switching tabs.
+- Snippets have content, optional note, and folder. Footer 新建 opens the editor sheet;
+  context menu supports edit/copy/paste/delete; double-click/Return paste.
+- The right preview pane is the same size and shares the same show/hide state as the clipboard
+  preview. Quick snippet copy uses the same paste-target flow as clipboard text.
+
 ## Rules
 
-- No extra windows, popovers, sidebars, settings, or tabs beyond the palette's inline filter
-  bar and the large image viewer.
+- No extra windows, popovers, settings, or top-level modes beyond the palette's two tabs
+  (剪贴板 / 快贴), inline filters, and the large image viewer.
 - Chinese UI copy only.
 - SwiftUI only for views; AppKit allowed for color helpers.
 - macOS 14+ APIs only.

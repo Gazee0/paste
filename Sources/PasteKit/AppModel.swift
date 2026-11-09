@@ -17,6 +17,14 @@ final class AppModel: ObservableObject {
     }
     @Published private(set) var selectedID: ClipboardItem.ID?
     @Published private(set) var historyFilter: HistoryFilter = .all
+    @Published private(set) var activeTab: PaletteTab = .clipboard
+
+    // MARK: Quick snippets
+    @Published private(set) var quickFolders: [QuickFolder] = []
+    @Published private(set) var quickSnippets: [QuickSnippet] = []
+    @Published private(set) var selectedQuickID: QuickSnippet.ID?
+    @Published private(set) var quickFolderSelection: QuickFolderSelection = .all
+    @Published var quickEditorDraft: QuickEditorDraft?
     @Published private(set) var isPreviewOpen = false
     /// Whether the preview column is still on screen. It stays true through the closing
     /// animation, so the window can shrink before the list claims the freed width.
@@ -40,6 +48,7 @@ final class AppModel: ObservableObject {
 
     let store: HistoryStore
     let monitor: ClipboardMonitor
+    private let quickStore: QuickStore
 
     var onPreviewChanged: ((Bool) -> Void)?
     var onPinChanged: ((Bool) -> Void)?
@@ -68,8 +77,12 @@ final class AppModel: ObservableObject {
     init(store: HistoryStore, monitor: ClipboardMonitor) {
         self.store = store
         self.monitor = monitor
+        self.quickStore = QuickStore(directory: store.directory)
         self.items = store.items
         self.selectedID = store.items.first?.id
+        self.quickFolders = quickStore.folders
+        self.quickSnippets = quickStore.snippets
+        self.selectedQuickID = quickStore.snippets.first?.id
         self.isWindowPinned = UserDefaults.standard.bool(forKey: AppStorageKey.windowPinned)
         self.imageCache.countLimit = 24
         self.imageCache.totalCostLimit = 64 * 1024 * 1024
@@ -95,6 +108,52 @@ final class AppModel: ObservableObject {
         let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return filteredByKind }
         return filteredByKind.filter { $0.matches(query) }
+    }
+
+    var quickFilteredSnippets: [QuickSnippet] {
+        let base: [QuickSnippet]
+        switch quickFolderSelection {
+        case .all:
+            base = quickSnippets
+        case .uncategorized:
+            base = quickSnippets.filter { $0.folderID == nil }
+        case .folder(let folderID):
+            base = quickSnippets.filter { $0.folderID == folderID }
+        }
+
+        let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return base }
+        return base.filter {
+            $0.content.localizedCaseInsensitiveContains(query)
+                || $0.note.localizedCaseInsensitiveContains(query)
+        }
+    }
+
+    var selectedQuickSnippet: QuickSnippet? {
+        guard let selectedQuickID else { return nil }
+        return quickSnippets.first { $0.id == selectedQuickID }
+    }
+
+    var quickFolderChoices: [QuickFolderSelection] {
+        [.all, .uncategorized] + quickFolders.map { .folder($0.id) }
+    }
+
+    func quickFolderTitle(for selection: QuickFolderSelection) -> String {
+        switch selection {
+        case .all: return "全部"
+        case .uncategorized: return "未分类"
+        case .folder(let id):
+            return quickFolders.first(where: { $0.id == id })?.name ?? "未分类"
+        }
+    }
+
+    func quickFolderTitle(for snippet: QuickSnippet) -> String {
+        guard let folderID = snippet.folderID else { return "未分类" }
+        return quickFolders.first(where: { $0.id == folderID })?.name ?? "未分类"
+    }
+
+    var currentSelectionExists: Bool {
+        activeTab == .clipboard ? selectedItem != nil : selectedQuickSnippet != nil
     }
 
     var selectedItem: ClipboardItem? {
@@ -127,6 +186,13 @@ final class AppModel: ObservableObject {
         return index + 1
     }
 
+    func quickShortcutIndex(for snippet: QuickSnippet) -> Int? {
+        guard let index = quickFilteredSnippets.firstIndex(where: { $0.id == snippet.id }), index < 9 else {
+            return nil
+        }
+        return index + 1
+    }
+
     func timeText(for date: Date) -> String {
         Calendar.current.isDateInToday(date)
             ? Self.timeFormatter.string(from: date)
@@ -156,26 +222,57 @@ final class AppModel: ObservableObject {
         selectedID = item.id
     }
 
+    func selectQuick(_ snippet: QuickSnippet) {
+        guard selectedQuickID != snippet.id else { return }
+        selectedQuickID = snippet.id
+    }
+
     func moveSelection(by delta: Int) {
         guard !isEditingPreview else { return }
+        if activeTab == .quick {
+            let rows = quickFilteredSnippets
+            guard !rows.isEmpty else { return }
+            if let selectedQuickID, let index = rows.firstIndex(where: { $0.id == selectedQuickID }) {
+                let next = min(max(index + delta, 0), rows.count - 1)
+                self.selectedQuickID = rows[next].id
+            } else {
+                selectedQuickID = delta >= 0 ? rows.first?.id : rows.last?.id
+            }
+            keyboardScrollNonce += 1
+            return
+        }
         let rows = filteredItems
         guard !rows.isEmpty else { return }
         if let selectedID, let index = rows.firstIndex(where: { $0.id == selectedID }) {
             let next = min(max(index + delta, 0), rows.count - 1)
             self.selectedID = rows[next].id
         } else {
-            self.selectedID = delta >= 0 ? rows.first?.id : rows.last?.id
+            selectedID = delta >= 0 ? rows.first?.id : rows.last?.id
         }
         keyboardScrollNonce += 1
     }
 
     /// Picks the first visible row, called when the panel is freshly presented.
     func resetSelectionToFirstRow() {
-        selectedID = filteredItems.first?.id
+        if activeTab == .quick {
+            selectedQuickID = quickFilteredSnippets.first?.id
+        } else {
+            selectedID = filteredItems.first?.id
+        }
         keyboardScrollNonce += 1
     }
 
     private func syncSelectionAfterFilterChange() {
+        if activeTab == .quick {
+            let rows = quickFilteredSnippets
+            if let selectedQuickID, rows.contains(where: { $0.id == selectedQuickID }) {
+                keyboardScrollNonce += 1
+                return
+            }
+            selectedQuickID = rows.first?.id
+            keyboardScrollNonce += 1
+            return
+        }
         let rows = filteredItems
         if let selectedID, rows.contains(where: { $0.id == selectedID }) {
             keyboardScrollNonce += 1
@@ -183,6 +280,50 @@ final class AppModel: ObservableObject {
         }
         selectedID = rows.first?.id
         keyboardScrollNonce += 1
+    }
+
+    func switchTab() {
+        setActiveTab(activeTab == .clipboard ? .quick : .clipboard)
+    }
+
+    func setActiveTab(_ tab: PaletteTab) {
+        guard tab != activeTab else {
+            refocusSearch()
+            return
+        }
+        editingID = nil
+        quickEditorDraft = nil
+        activeTab = tab
+        searchQuery = ""
+        if tab == .quick {
+            selectedQuickID = quickFilteredSnippets.first?.id
+        } else {
+            selectedID = filteredItems.first?.id
+        }
+        keyboardScrollNonce += 1
+        if isPreviewOpen && !currentSelectionExists {
+            closePreview()
+        }
+        refocusSearch()
+    }
+
+    func setQuickFolder(_ selection: QuickFolderSelection) {
+        guard selection != quickFolderSelection else {
+            refocusSearch()
+            return
+        }
+        quickFolderSelection = selection
+        selectedQuickID = quickFilteredSnippets.first?.id
+        keyboardScrollNonce += 1
+        refocusSearch()
+    }
+
+    func cycleQuickFolder(by delta: Int) {
+        let choices = quickFolderChoices
+        guard !choices.isEmpty else { return }
+        let index = choices.firstIndex(of: quickFolderSelection) ?? 0
+        let next = (index + delta + choices.count) % choices.count
+        setQuickFolder(choices[next])
     }
 
     func cycleHistoryFilter(by delta: Int) {
@@ -202,7 +343,7 @@ final class AppModel: ObservableObject {
     // MARK: - Preview and window chrome
 
     func togglePreview() {
-        guard selectedItem != nil else { return }
+        guard currentSelectionExists else { return }
         if isPreviewOpen {
             closePreview()
         } else {
@@ -266,12 +407,18 @@ final class AppModel: ObservableObject {
             onPreviewChanged?(false)
         }
         editingID = nil
+        quickEditorDraft = nil
+        activeTab = .clipboard
         isMultiSelecting = false
         checkedIDs.removeAll()
         searchQuery = ""
         historyFilter = .all
+        quickFolderSelection = .all
         items = store.items
+        quickFolders = quickStore.folders
+        quickSnippets = quickStore.snippets
         selectedID = filteredItems.first?.id
+        selectedQuickID = quickFilteredSnippets.first?.id
         keyboardScrollNonce += 1
         dismissToast()
         refocusSearch()
@@ -285,6 +432,158 @@ final class AppModel: ObservableObject {
     func refocusSearch() {
         guard !isEditingPreview else { return }
         focusRequestNonce += 1
+    }
+
+    // MARK: - Quick snippets
+
+    var quickCountText: String {
+        if isSearching {
+            return "\(quickFilteredSnippets.count)/\(quickSnippets.count)"
+        }
+        return "\(quickSnippets.count)"
+    }
+
+    func quickCount(in selection: QuickFolderSelection) -> Int {
+        switch selection {
+        case .all:
+            return quickSnippets.count
+        case .uncategorized:
+            return quickSnippets.filter { $0.folderID == nil }.count
+        case .folder(let id):
+            return quickSnippets.filter { $0.folderID == id }.count
+        }
+    }
+
+    func beginNewQuickSnippet() {
+        let folderID: UUID? = {
+            if case .folder(let id) = quickFolderSelection { return id }
+            return nil
+        }()
+        quickEditorDraft = QuickEditorDraft(
+            snippetID: nil,
+            content: "",
+            note: "",
+            folderID: folderID
+        )
+    }
+
+    func beginEditingQuickSnippet(_ snippet: QuickSnippet? = nil) {
+        guard let snippet = snippet ?? selectedQuickSnippet else { return }
+        quickEditorDraft = QuickEditorDraft(
+            snippetID: snippet.id,
+            content: snippet.content,
+            note: snippet.note,
+            folderID: snippet.folderID
+        )
+    }
+
+    func saveQuickEditor(
+        snippetID: UUID?,
+        folderID: UUID?,
+        content: String,
+        note: String
+    ) {
+        let saved: QuickSnippet?
+        if let snippetID {
+            saved = quickStore.updateSnippet(
+                id: snippetID,
+                folderID: folderID,
+                content: content,
+                note: note
+            )
+        } else {
+            saved = quickStore.addSnippet(
+                folderID: folderID,
+                content: content,
+                note: note
+            )
+        }
+        guard let saved else {
+            showToast("内容不能为空")
+            return
+        }
+        if quickFolderSelection != .all {
+            quickFolderSelection = saved.folderID.map { .folder($0) } ?? .uncategorized
+        }
+        quickEditorDraft = nil
+        refreshQuick(select: saved.id)
+        if isPreviewOpen {
+            ensurePreviewMatchesSelection()
+        }
+        showToast(snippetID == nil ? "已新建快贴" : "已保存快贴")
+        refocusSearch()
+    }
+
+    func cancelQuickEditor() {
+        quickEditorDraft = nil
+        refocusSearch()
+    }
+
+    func deleteQuickSnippet(_ snippet: QuickSnippet) {
+        quickStore.deleteSnippet(id: snippet.id)
+        refreshQuick(select: selectedQuickID == snippet.id ? nil : selectedQuickID)
+        if activeTab == .quick && isPreviewOpen && selectedQuickSnippet == nil {
+            closePreview()
+        }
+        showToast("已删除快贴")
+        refocusSearch()
+    }
+
+    @discardableResult
+    func addQuickFolder(named name: String) -> Bool {
+        guard let folder = quickStore.addFolder(named: name) else {
+            showToast("文件夹名为空或已存在")
+            return false
+        }
+        refreshQuick(select: nil)
+        quickFolderSelection = .folder(folder.id)
+        selectedQuickID = quickFilteredSnippets.first?.id
+        keyboardScrollNonce += 1
+        showToast("已新建文件夹")
+        refocusSearch()
+        return true
+    }
+
+    @discardableResult
+    func renameQuickFolder(id: UUID, to name: String) -> Bool {
+        guard quickStore.renameFolder(id: id, to: name) else {
+            showToast("文件夹名为空或已存在")
+            return false
+        }
+        refreshQuick(select: selectedQuickID)
+        refocusSearch()
+        return true
+    }
+
+    func deleteQuickFolder(id: UUID) {
+        quickStore.deleteFolder(id: id)
+        if quickFolderSelection == .folder(id) {
+            quickFolderSelection = .all
+        }
+        refreshQuick(select: nil)
+        showToast("已删除文件夹")
+        refocusSearch()
+    }
+
+    private func refreshQuick(select preferredID: UUID?) {
+        quickFolders = quickStore.folders
+        quickSnippets = quickStore.snippets
+        let rows = quickFilteredSnippets
+        if let preferredID, rows.contains(where: { $0.id == preferredID }) {
+            selectedQuickID = preferredID
+        } else if let selectedQuickID, rows.contains(where: { $0.id == selectedQuickID }) {
+            // Keep the current selection if it is still visible.
+        } else {
+            selectedQuickID = rows.first?.id
+        }
+        keyboardScrollNonce += 1
+    }
+
+    private func ensurePreviewMatchesSelection() {
+        guard isPreviewOpen else { return }
+        if !currentSelectionExists {
+            closePreview()
+        }
     }
 
     // MARK: - Multi-select
@@ -344,8 +643,47 @@ final class AppModel: ObservableObject {
     }
 
     func copySelected() {
+        if activeTab == .quick {
+            guard let selectedQuickSnippet else { return }
+            copyQuick(selectedQuickSnippet)
+            return
+        }
         guard let selectedItem else { return }
         copy(selectedItem)
+    }
+
+    func copyQuick(_ snippet: QuickSnippet) {
+        guard PasteboardWriter.writeText(snippet.content) != nil else {
+            showToast("拷贝失败，请重试")
+            return
+        }
+        monitor.acknowledgeOwnWrite()
+        showToast("已拷贝")
+        refocusSearch()
+    }
+
+    func pasteQuick(_ snippet: QuickSnippet) {
+        guard PasteboardWriter.writeText(snippet.content) != nil else {
+            showToast("拷贝失败，请重试")
+            return
+        }
+        monitor.acknowledgeOwnWrite()
+        let outcome = PasteTarget.paste(keepWindowVisible: isWindowPinned)
+        switch outcome {
+        case .pasted:
+            break
+        case .needsPermission:
+            showToast(
+                outcome.message,
+                actionTitle: "打开设置",
+                action: { PasteTarget.openAccessibilitySettings() }
+            )
+        case .noTarget, .notDelivered, .copyFailed:
+            showToast(outcome.message)
+        }
+        if !isWindowPinned || outcome != .pasted {
+            refocusSearch()
+        }
     }
 
     /// Opens the standalone viewer for the selected image. The window itself is owned by the
@@ -390,6 +728,11 @@ final class AppModel: ObservableObject {
     }
 
     func pasteSelected() {
+        if activeTab == .quick {
+            guard let selectedQuickSnippet else { return }
+            pasteQuick(selectedQuickSnippet)
+            return
+        }
         guard let selectedItem, !isMultiSelecting else { return }
         paste(selectedItem)
     }

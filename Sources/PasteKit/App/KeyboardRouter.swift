@@ -78,6 +78,13 @@ final class KeyboardRouter {
         // While editing preview text, the text editor owns every other key.
         if model.isEditingPreview { return false }
 
+        // Tab is the global switch between clipboard history and quick snippets.
+        if event.keyCode == 48, flags.isEmpty || flags == .shift {
+            guard !event.isARepeat else { return true }
+            model.switchTab()
+            return true
+        }
+
         // The preview's read-only NSTextView owns arrow keys, selection, and ⌘C/⌘A while it has
         // the keyboard. Only Escape (above) remains a palette shortcut.
         if panel.firstResponder is PreviewTextView { return false }
@@ -94,11 +101,19 @@ final class KeyboardRouter {
         // arrows keep their normal text-caret behavior; clear the query (Esc) to switch again.
         if flags.isEmpty, !model.isSearching {
             if event.keyCode == 123 { // ←
-                model.cycleHistoryFilter(by: -1)
+                if model.activeTab == .quick {
+                    model.cycleQuickFolder(by: -1)
+                } else {
+                    model.cycleHistoryFilter(by: -1)
+                }
                 return true
             }
             if event.keyCode == 124 { // →
-                model.cycleHistoryFilter(by: 1)
+                if model.activeTab == .quick {
+                    model.cycleQuickFolder(by: 1)
+                } else {
+                    model.cycleHistoryFilter(by: 1)
+                }
                 return true
             }
         }
@@ -114,9 +129,16 @@ final class KeyboardRouter {
                 return true
             }
             if let number = Self.digitKeyCodes[event.keyCode], !event.isARepeat {
-                let rows = model.filteredItems
-                if number <= rows.count {
-                    model.paste(rows[number - 1])
+                if model.activeTab == .quick {
+                    let rows = model.quickFilteredSnippets
+                    if number <= rows.count {
+                        model.pasteQuick(rows[number - 1])
+                    }
+                } else {
+                    let rows = model.filteredItems
+                    if number <= rows.count {
+                        model.paste(rows[number - 1])
+                    }
                 }
                 return true
             }

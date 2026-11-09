@@ -15,23 +15,52 @@ struct RootView: View {
     var body: some View {
         GeometryReader { proxy in
             let previewOpen = model.isPreviewVisible
-            let contentHeight = max(0, proxy.size.height - PasteLayout.topBarHeight - 1)
+            let contentHeight = max(
+                0,
+                proxy.size.height - PasteLayout.tabBarHeight - PasteLayout.topBarHeight - 1
+            )
 
             VStack(spacing: 0) {
+                PaletteTabBar(model: model)
+                    .frame(height: PasteLayout.tabBarHeight)
                 TopBarView(model: model)
                     .frame(height: PasteLayout.topBarHeight)
                 Hairline()
                 ZStack(alignment: .topLeading) {
-                    historyColumn
-                        .frame(width: previewOpen ? PasteLayout.historyWidth : proxy.size.width)
+                    Group {
+                        if model.activeTab == .clipboard {
+                            historyColumn
+                        } else {
+                            QuickTabView(model: model)
+                                .overlay(alignment: .bottom) {
+                                    toastOverlay
+                                }
+                        }
+                    }
+                    .frame(width: previewOpen ? PasteLayout.historyWidth : proxy.size.width)
+
                     if previewOpen {
-                        previewColumn
-                            .frame(width: PasteLayout.previewWidth, height: contentHeight)
-                            .offset(x: PasteLayout.historyWidth)
+                        Group {
+                            if model.activeTab == .clipboard {
+                                previewColumn
+                            } else {
+                                QuickPreviewPaneView(model: model)
+                                    .overlay(alignment: .leading) {
+                                        Rectangle()
+                                            .fill(PasteTheme.separator)
+                                            .frame(width: 1)
+                                    }
+                            }
+                        }
+                        .frame(width: PasteLayout.previewWidth, height: contentHeight)
+                        .offset(x: PasteLayout.historyWidth)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .clipped()
+            }
+            .sheet(item: $model.quickEditorDraft) { draft in
+                QuickEditorSheet(model: model, draft: draft)
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
             .background(PasteTheme.background)
