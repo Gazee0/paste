@@ -72,9 +72,13 @@ type the Lead's `PanelController` constructs.
 - Filter bar chips 全部 / 文本 / 图片 / 文件, 10.5pt medium; selected chip has a subtle
   primary-tint background. Clicking a chip filters by `ClipboardKind`; ←/→ do the same while
   the search query is empty.
-- ScrollView + VStack (non-lazy; history is capped at 200 items) so rows are not recreated at
-  the viewport edge while the preview window animates. Rows touch full width with 6pt
-  horizontal inset and 4pt vertical gap. Native overlay scrollers preferred.
+- ScrollView + LazyVStack so a 200-item history does not materialize every row at once.
+  Rows touch full width with 6pt horizontal inset and 4pt vertical gap; native overlay
+  scrollers preferred. Preview-height padding keeps the list offset stable while the preview
+  window animates.
+- Image rows use a 256px downsampled thumbnail; the preview uses at most 640px; the
+  full-resolution image is loaded only by the large-image viewer. Decoded image caches are
+  tiny and are cleared when the palette hides.
 - Row (`HistoryRowView`), about 54–64pt tall, dynamic up to 2 lines:
   - Leading type icon (14pt) in a 26×26 tinted rounded square: text = `doc.text` blue,
     image = `photo` purple, files = `folder` orange.

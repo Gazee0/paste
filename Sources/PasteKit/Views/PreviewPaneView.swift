@@ -96,7 +96,7 @@ struct PreviewPaneView: View {
 
     private func imageContent(_ item: ClipboardItem) -> some View {
         VStack(spacing: 8) {
-            if let image = model.image(for: item) {
+            if let image = model.previewImage(for: item) {
                 GeometryReader { proxy in
                     let pixelSize = CGSize(
                         width: item.pixelWidth.map(CGFloat.init) ?? image.size.width,

@@ -117,6 +117,7 @@ final class PanelController: NSObject, NSWindowDelegate {
 
     func hide() {
         persistPosition()
+        model.trimImageCaches()
         panel.orderOut(nil)
         NSApp.hide(nil)
     }

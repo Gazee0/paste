@@ -36,8 +36,8 @@ final class HistoryStore {
 
         try? fileManager.createDirectory(at: root, withIntermediateDirectories: true)
         try? fileManager.createDirectory(at: imagesDirectory, withIntermediateDirectories: true)
-        imageCache.countLimit = 40
-        imageCache.totalCostLimit = 96 * 1024 * 1024
+        imageCache.countLimit = 8
+        imageCache.totalCostLimit = 16 * 1024 * 1024
 
         if load {
             loadFromDisk()

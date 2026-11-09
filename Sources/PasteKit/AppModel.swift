@@ -57,6 +57,8 @@ final class AppModel: ObservableObject {
     var onShowLargeImagePreview: ((ClipboardItem, NSImage) -> Void)?
 
     private let imageCache = NSCache<NSString, NSImage>()
+    private let previewImageCache = NSCache<NSString, NSImage>()
+    private let thumbnailCache = NSCache<NSString, NSImage>()
     private var toastTask: Task<Void, Never>?
     private var pendingToastAction: (() -> Void)?
     private var previewTransitionGeneration = 0
@@ -85,8 +87,14 @@ final class AppModel: ObservableObject {
         self.quickSnippets = quickStore.snippets
         self.selectedQuickID = quickStore.snippets.first?.id
         self.isWindowPinned = UserDefaults.standard.bool(forKey: AppStorageKey.windowPinned)
-        self.imageCache.countLimit = 24
-        self.imageCache.totalCostLimit = 64 * 1024 * 1024
+        // Full-size decoded images are only needed by the preview/large-image viewer. Keep at
+        // most one; list rows use small downsampled thumbnails from `thumbnailCache`.
+        self.imageCache.countLimit = 1
+        self.imageCache.totalCostLimit = 12 * 1024 * 1024
+        self.previewImageCache.countLimit = 1
+        self.previewImageCache.totalCostLimit = 8 * 1024 * 1024
+        self.thumbnailCache.countLimit = 48
+        self.thumbnailCache.totalCostLimit = 8 * 1024 * 1024
         monitor.onCapture = { [weak self] payload in
             self?.capture(payload)
         }
@@ -206,6 +214,51 @@ final class AppModel: ObservableObject {
         guard let data = store.imageData(for: item), let image = NSImage(data: data) else { return nil }
         imageCache.setObject(image, forKey: name as NSString, cost: data.count)
         return image
+    }
+
+    /// Downsampled image for the preview pane. The preview only needs roughly 2× its 284pt
+    /// width; the full-resolution image is reserved for the large-image viewer.
+    func previewImage(for item: ClipboardItem) -> NSImage? {
+        guard item.kind == .image, let name = item.imageFile else { return nil }
+        let key = name as NSString
+        if let cached = previewImageCache.object(forKey: key) { return cached }
+        guard let data = store.imageData(for: item),
+              let image = Self.downsampledImage(data: data, maxPixelSize: 640) else { return nil }
+        previewImageCache.setObject(image, forKey: key, cost: data.count)
+        return image
+    }
+
+    /// Small decoded image for a history row. Never decode the full image for a row: a 1920px
+    /// screenshot can cost several megabytes after ImageIO decoding even if the PNG is small.
+    func thumbnail(for item: ClipboardItem) -> NSImage? {
+        guard item.kind == .image, let name = item.imageFile else { return nil }
+        let key = name as NSString
+        if let cached = thumbnailCache.object(forKey: key) { return cached }
+        guard let data = store.imageData(for: item),
+              let image = Self.downsampledImage(data: data, maxPixelSize: 256) else { return nil }
+        thumbnailCache.setObject(image, forKey: key, cost: data.count)
+        return image
+    }
+
+    /// Release decoded image memory when the palette is hidden or when the preview changes.
+    func trimImageCaches() {
+        imageCache.removeAllObjects()
+        previewImageCache.removeAllObjects()
+        thumbnailCache.removeAllObjects()
+    }
+
+    private static func downsampledImage(data: Data, maxPixelSize: CGFloat) -> NSImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
+            kCGImageSourceShouldCacheImmediately: false,
+        ]
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+            return nil
+        }
+        return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
     }
 
     // MARK: - Capture

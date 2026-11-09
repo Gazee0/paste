@@ -66,10 +66,10 @@ struct HistoryListView: View {
     private var scrollList: some View {
         let rows = model.filteredItems
         return ScrollView(.vertical) {
-            // Deliberately non-lazy: the preview resize animates the viewport height, and a
-            // LazyVStack continuously recreates rows at the visible edges during that animation,
-            // which reads as flickering list items. History is capped at 200 rows.
-            VStack(spacing: 0) {
+            // Lazy rows keep a 200-item history from materializing every row (and its image
+            // thumbnail) at once. The scroll padding below keeps the viewport stable during the
+            // preview resize animation.
+            LazyVStack(spacing: 0) {
                 ForEach(Array(rows.enumerated()), id: \.element.id) { index, item in
                     rowView(for: item, showsSeparator: index < rows.count - 1)
                 }
@@ -89,7 +89,7 @@ struct HistoryListView: View {
     private func rowView(for item: ClipboardItem, showsSeparator: Bool) -> some View {
         HistoryRowView(
             item: item,
-            thumbnail: item.kind == .image ? model.image(for: item) : nil,
+            thumbnail: item.kind == .image ? model.thumbnail(for: item) : nil,
             isSelected: model.isSelected(item.id),
             isMultiSelecting: model.isMultiSelecting,
             isInteractionLocked: model.isEditingPreview || model.isPreviewTransitioning,
