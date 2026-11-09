@@ -77,8 +77,8 @@ type the Lead's `PanelController` constructs.
   scrollers preferred. Preview-height padding keeps the list offset stable while the preview
   window animates.
 - Image rows use a 256px downsampled thumbnail; the preview uses at most 640px; the
-  full-resolution image is loaded only by the large-image viewer. Decoded image caches are
-  tiny and are cleared when the palette hides.
+  full-resolution image is loaded only by the large-image viewer and is not cached: closing
+  the viewer releases it. The small decoded caches are cleared when the palette hides.
 - Row (`HistoryRowView`), about 54–64pt tall, dynamic up to 2 lines:
   - Leading type icon (14pt) in a 26×26 tinted rounded square: text = `doc.text` blue,
     image = `photo` purple, files = `folder` orange.

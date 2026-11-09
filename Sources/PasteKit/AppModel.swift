@@ -56,7 +56,6 @@ final class AppModel: ObservableObject {
     var onHideRequested: (() -> Void)?
     var onShowLargeImagePreview: ((ClipboardItem, NSImage) -> Void)?
 
-    private let imageCache = NSCache<NSString, NSImage>()
     private let previewImageCache = NSCache<NSString, NSImage>()
     private let thumbnailCache = NSCache<NSString, NSImage>()
     private var toastTask: Task<Void, Never>?
@@ -87,10 +86,9 @@ final class AppModel: ObservableObject {
         self.quickSnippets = quickStore.snippets
         self.selectedQuickID = quickStore.snippets.first?.id
         self.isWindowPinned = UserDefaults.standard.bool(forKey: AppStorageKey.windowPinned)
-        // Full-size decoded images are only needed by the preview/large-image viewer. Keep at
-        // most one; list rows use small downsampled thumbnails from `thumbnailCache`.
-        self.imageCache.countLimit = 1
-        self.imageCache.totalCostLimit = 12 * 1024 * 1024
+        // Full-size decoded images are never cached: the large-image viewer owns the image for
+        // its lifetime, so closing the viewer releases it. List rows use small downsampled
+        // thumbnails from `thumbnailCache`.
         self.previewImageCache.countLimit = 1
         self.previewImageCache.totalCostLimit = 8 * 1024 * 1024
         self.thumbnailCache.countLimit = 48
@@ -208,12 +206,12 @@ final class AppModel: ObservableObject {
             : Self.dayFormatter.string(from: date)
     }
 
+    /// Full-resolution image for the large-image viewer only. Deliberately uncached: the
+    /// viewer is the sole owner, so closing it releases the decoded image.
     func image(for item: ClipboardItem) -> NSImage? {
-        guard item.kind == .image, let name = item.imageFile else { return nil }
-        if let cached = imageCache.object(forKey: name as NSString) { return cached }
-        guard let data = store.imageData(for: item), let image = NSImage(data: data) else { return nil }
-        imageCache.setObject(image, forKey: name as NSString, cost: data.count)
-        return image
+        guard item.kind == .image, item.imageFile != nil else { return nil }
+        guard let data = store.imageData(for: item) else { return nil }
+        return NSImage(data: data)
     }
 
     /// Downsampled image for the preview pane. The preview only needs roughly 2× its 284pt
@@ -242,7 +240,6 @@ final class AppModel: ObservableObject {
 
     /// Release decoded image memory when the palette is hidden or when the preview changes.
     func trimImageCaches() {
-        imageCache.removeAllObjects()
         previewImageCache.removeAllObjects()
         thumbnailCache.removeAllObjects()
     }
