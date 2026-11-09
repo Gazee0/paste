@@ -5,6 +5,18 @@ import SwiftUI
 /// let native text selection keep its arrow keys and copy shortcuts.
 final class PreviewTextView: NSTextView {}
 
+/// NSScrollView that tells the representable when its content size changes, so the text
+/// container can be resized with the correct horizontal inset instead of keeping the width
+/// from the first layout pass.
+final class PreviewScrollView: NSScrollView {
+    var onLayout: (() -> Void)?
+
+    override func layout() {
+        super.layout()
+        onLayout?()
+    }
+}
+
 /// Read-only, selectable text surface for the preview pane.
 ///
 /// SwiftUI's `Text` selection can be awkward while another control (the search field) owns the
@@ -18,7 +30,7 @@ struct SelectableTextView: NSViewRepresentable {
     }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSScrollView()
+        let scrollView = PreviewScrollView()
         scrollView.drawsBackground = false
         scrollView.borderType = .noBorder
         scrollView.hasVerticalScroller = true
@@ -45,13 +57,19 @@ struct SelectableTextView: NSViewRepresentable {
         textView.isAutomaticDashSubstitutionEnabled = false
         textView.isAutomaticTextReplacementEnabled = false
         textView.textContainer?.lineFragmentPadding = 0
-        textView.textContainer?.widthTracksTextView = true
+        // The text view spans the full pane, but its container must leave room for the same
+        // horizontal inset on both sides. Otherwise long lines run right up to the window edge
+        // and the preview loses its right margin.
+        textView.textContainer?.widthTracksTextView = false
         textView.textContainer?.containerSize = NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
         scrollView.documentView = textView
 
         context.coordinator.scrollView = scrollView
         context.coordinator.textView = textView
         context.coordinator.setText(text)
+        scrollView.onLayout = { [weak coordinator = context.coordinator] in
+            coordinator?.layout()
+        }
         DispatchQueue.main.async {
             context.coordinator.layout()
         }
@@ -72,6 +90,7 @@ struct SelectableTextView: NSViewRepresentable {
     final class Coordinator {
         weak var scrollView: NSScrollView?
         weak var textView: NSTextView?
+        private var isLayingOut = false
 
         private static let paragraphStyle: NSParagraphStyle = {
             let style = NSMutableParagraphStyle()
@@ -92,13 +111,18 @@ struct SelectableTextView: NSViewRepresentable {
 
         @MainActor
         func layout() {
-            guard let scrollView, let textView,
+            guard !isLayingOut,
+                  let scrollView, let textView,
                   let container = textView.textContainer,
                   let layoutManager = textView.layoutManager else { return }
+            isLayingOut = true
+            defer { isLayingOut = false }
 
             let width = max(1, scrollView.contentSize.width)
-            container.containerSize = NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
-            container.widthTracksTextView = true
+            guard width > 1 else { return }
+            let textWidth = max(1, width - textView.textContainerInset.width * 2)
+            container.widthTracksTextView = false
+            container.containerSize = NSSize(width: textWidth, height: CGFloat.greatestFiniteMagnitude)
             textView.frame = NSRect(
                 origin: .zero,
                 size: NSSize(width: width, height: max(1, scrollView.contentSize.height))
