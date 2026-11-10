@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 import Carbon.HIToolbox
 
 /// The one global shortcut: ⌥V, registered with Carbon so it works while another app is
@@ -9,7 +10,12 @@ final class GlobalHotKey {
     private var handlerRef: EventHandlerRef?
     private var isPressed = false
     private var lastPressTime: CFTimeInterval = 0
+    private var lastActionTime: CFTimeInterval = 0
     private var releaseFallback: DispatchWorkItem?
+    private var globalMonitor: Any?
+    private var isRegistered = false
+    private var savedKeyCode: UInt32 = UInt32(kVK_ANSI_V)
+    private var savedModifiers: UInt32 = UInt32(optionKey)
     private var action: (() -> Void)?
 
     private static let signature = OSType(0x50415354) // 'PAST'
@@ -20,6 +26,8 @@ final class GlobalHotKey {
                   modifiers: UInt32 = UInt32(optionKey),
                   action: @escaping () -> Void) -> Bool {
         self.action = action
+        savedKeyCode = keyCode
+        savedModifiers = modifiers
         unregister()
         installHandlerIfNeeded()
 
@@ -33,19 +41,32 @@ final class GlobalHotKey {
             0,
             &reference
         )
-        guard status == noErr, reference != nil else {
+        if status == noErr, let reference {
+            hotKeyRef = reference
+            isRegistered = true
+        } else {
+            isRegistered = false
             NSLog("Paste: global shortcut could not be registered (OSStatus \(status))")
-            return false
         }
-        hotKeyRef = reference
-        return true
+
+        // Carbon can occasionally fail or miss an event; when Accessibility is already granted
+        // (for auto-paste), a passive global monitor gives the shortcut a second path.
+        installGlobalMonitorIfPossible()
+        return isRegistered
     }
 
     func unregister() {
         resetPressState()
+        removeGlobalMonitor()
+        isRegistered = false
         guard let hotKeyRef else { return }
         UnregisterEventHotKey(hotKeyRef)
         self.hotKeyRef = nil
+    }
+
+    func retryRegistrationIfNeeded() {
+        guard !isRegistered, let action else { return }
+        _ = register(keyCode: savedKeyCode, modifiers: savedModifiers, action: action)
     }
 
     /// Carbon normally sends a release event for every press. If the release is lost while
@@ -56,6 +77,14 @@ final class GlobalHotKey {
         lastPressTime = 0
         releaseFallback?.cancel()
         releaseFallback = nil
+    }
+
+    private func triggerFromAnyPath() {
+        let now = CACurrentMediaTime()
+        // Carbon and the passive monitor can both see the same physical key press.
+        guard now - lastActionTime > 0.25 else { return }
+        lastActionTime = now
+        action?()
     }
 
     fileprivate func handle(_ event: EventRef) -> OSStatus {
@@ -78,7 +107,7 @@ final class GlobalHotKey {
             if isPressed, now - lastPressTime < 0.5 { return noErr }
             isPressed = true
             lastPressTime = now
-            action?()
+            triggerFromAnyPath()
 
             // If the release event is lost (for example when app/space activation changes),
             // clear the pressed state shortly after rather than leaving the shortcut dead.
@@ -104,7 +133,36 @@ final class GlobalHotKey {
             EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed)),
             EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyReleased)),
         ]
-        InstallEventHandler(GetEventDispatcherTarget(), pasteHotKeyHandler, specs.count, &specs, nil, &handlerRef)
+        let status = InstallEventHandler(
+            GetEventDispatcherTarget(),
+            pasteHotKeyHandler,
+            specs.count,
+            &specs,
+            nil,
+            &handlerRef
+        )
+        if status != noErr {
+            NSLog("Paste: global shortcut handler could not be installed (OSStatus \(status))")
+        }
+    }
+
+    private func installGlobalMonitorIfPossible() {
+        guard globalMonitor == nil, AXIsProcessTrusted() else { return }
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            let flags = event.modifierFlags
+                .intersection(.deviceIndependentFlagsMask)
+                .subtracting([.function, .numericPad])
+            guard event.keyCode == UInt16(kVK_ANSI_V), flags == .option else { return }
+            Task { @MainActor [weak self] in
+                self?.triggerFromAnyPath()
+            }
+        }
+    }
+
+    private func removeGlobalMonitor() {
+        guard let globalMonitor else { return }
+        NSEvent.removeMonitor(globalMonitor)
+        self.globalMonitor = nil
     }
 }
 

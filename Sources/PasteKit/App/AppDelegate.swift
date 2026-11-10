@@ -64,8 +64,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
-        // Recover from a missed Carbon hot-key release when the app comes forward.
+        // Recover from a missed Carbon hot-key release and retry a transient registration
+        // failure (for example while another app briefly owns the shortcut).
         GlobalHotKeyCenter.shared.resetPressState()
+        GlobalHotKeyCenter.shared.retryRegistrationIfNeeded()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
