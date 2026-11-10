@@ -8,6 +8,8 @@ final class GlobalHotKey {
     private var hotKeyRef: EventHotKeyRef?
     private var handlerRef: EventHandlerRef?
     private var isPressed = false
+    private var lastPressTime: CFTimeInterval = 0
+    private var releaseFallback: DispatchWorkItem?
     private var action: (() -> Void)?
 
     private static let signature = OSType(0x50415354) // 'PAST'
@@ -40,10 +42,20 @@ final class GlobalHotKey {
     }
 
     func unregister() {
-        isPressed = false
+        resetPressState()
         guard let hotKeyRef else { return }
         UnregisterEventHotKey(hotKeyRef)
         self.hotKeyRef = nil
+    }
+
+    /// Carbon normally sends a release event for every press. If the release is lost while
+    /// switching apps/spaces, the old boolean guard would reject every later press forever.
+    /// A timestamp-based debounce plus this reset keeps the shortcut recoverable.
+    func resetPressState() {
+        isPressed = false
+        lastPressTime = 0
+        releaseFallback?.cancel()
+        releaseFallback = nil
     }
 
     fileprivate func handle(_ event: EventRef) -> OSStatus {
@@ -62,11 +74,24 @@ final class GlobalHotKey {
         }
         switch GetEventKind(event) {
         case UInt32(kEventHotKeyPressed):
-            guard !isPressed else { return noErr }
+            let now = CACurrentMediaTime()
+            if isPressed, now - lastPressTime < 0.5 { return noErr }
             isPressed = true
+            lastPressTime = now
             action?()
+
+            // If the release event is lost (for example when app/space activation changes),
+            // clear the pressed state shortly after rather than leaving the shortcut dead.
+            releaseFallback?.cancel()
+            let fallback = DispatchWorkItem { [weak self] in
+                self?.isPressed = false
+            }
+            releaseFallback = fallback
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.9, execute: fallback)
         case UInt32(kEventHotKeyReleased):
             isPressed = false
+            releaseFallback?.cancel()
+            releaseFallback = nil
         default:
             return OSStatus(eventNotHandledErr)
         }

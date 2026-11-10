@@ -63,6 +63,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         #endif
     }
 
+    func applicationDidBecomeActive(_ notification: Notification) {
+        // Recover from a missed Carbon hot-key release when the app comes forward.
+        GlobalHotKeyCenter.shared.resetPressState()
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         GlobalHotKeyCenter.shared.unregister()
         monitor.stop()
