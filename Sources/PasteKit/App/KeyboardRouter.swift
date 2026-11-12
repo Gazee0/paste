@@ -126,7 +126,7 @@ final class KeyboardRouter {
                 }
                 return true
             }
-            if event.keyCode == 49 { // ⌥Space
+            if event.keyCode == UInt16(kVK_ANSI_P) { // ⌥P
                 guard !event.isARepeat else { return true }
                 model.togglePreview()
                 return true

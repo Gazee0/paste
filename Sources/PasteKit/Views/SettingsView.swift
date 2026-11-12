@@ -227,7 +227,7 @@ enum ShortcutCatalog {
             ShortcutItem("在列表区上移 / 下移选择", [["↑"], ["↓"]]),
             ShortcutItem("上一个 / 下一个筛选项", [["⌥", "←"], ["⌥", "→"]], detail: "剪贴板切换类型；快贴切换文件夹，搜索框有内容时也可用"),
             ShortcutItem("打开 / 关闭预览", [["Space"]], detail: "搜索框为空时"),
-            ShortcutItem("显示 / 隐藏预览", [["⌥", "Space"]], detail: "随时可用"),
+            ShortcutItem("显示 / 隐藏预览", [["⌥", "P"]], detail: "随时可用"),
             ShortcutItem("粘贴选中条目", [["↩"]]),
             ShortcutItem("粘贴第 1–9 条", [["⌘", "1–9"]]),
             ShortcutItem("粘贴条目 / 打开菜单", [["双击"], ["右键"]]),
