@@ -223,24 +223,21 @@ enum ShortcutCatalog {
             ShortcutItem("关闭面板 / 退出编辑 / 清空搜索", [["Esc"]], detail: "按当前状态逐级处理，不会关闭预览"),
             ShortcutItem("切换剪贴板 / 快贴", [["Tab"]]),
         ]),
-        ShortcutSection(title: "剪贴板", systemImage: "doc.on.clipboard", items: [
-            ShortcutItem("上移 / 下移选择", [["↑"], ["↓"]]),
-            ShortcutItem("切换类型筛选", [["←"], ["→"]], detail: "搜索框为空时"),
+        ShortcutSection(title: "通用（剪贴板与快贴）", systemImage: "square.grid.2x2", items: [
+            ShortcutItem("在列表区上移 / 下移选择", [["↑"], ["↓"]]),
             ShortcutItem("打开 / 关闭预览", [["Space"]], detail: "搜索框为空时"),
             ShortcutItem("随时打开 / 关闭预览", [["⇧", "Space"]]),
             ShortcutItem("粘贴选中条目", [["↩"]]),
             ShortcutItem("粘贴第 1–9 条", [["⌘", "1–9"]]),
-            ShortcutItem("多选时删除已勾选", [["⌫"], ["⌦"]]),
             ShortcutItem("粘贴条目 / 打开菜单", [["双击"], ["右键"]]),
         ]),
+        ShortcutSection(title: "剪贴板", systemImage: "doc.on.clipboard", items: [
+            ShortcutItem("切换类型筛选", [["←"], ["→"]], detail: "搜索框为空时"),
+        ]),
         ShortcutSection(title: "快贴", systemImage: "bolt", items: [
-            ShortcutItem("在列表区上下移动", [["↑"], ["↓"]]),
             ShortcutItem("进入文件夹区 / 返回列表区", [["←"], ["→"]], detail: "搜索框为空时"),
-            ShortcutItem("在文件夹区上下移动", [["↑"], ["↓"]]),
+            ShortcutItem("在文件夹区上移 / 下移", [["↑"], ["↓"]]),
             ShortcutItem("文件夹区返回列表区", [["↩"]]),
-            ShortcutItem("粘贴选中快贴", [["↩"]]),
-            ShortcutItem("粘贴第 1–9 条", [["⌘", "1–9"]]),
-            ShortcutItem("粘贴条目 / 打开菜单", [["双击"], ["右键"]]),
         ]),
     ]
 }
