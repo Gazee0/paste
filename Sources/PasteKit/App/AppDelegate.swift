@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusBar: StatusBarController?
     private var keyboardRouter: KeyboardRouter?
     private var imagePreviewController: ImagePreviewController?
+    private var settingsWindowController: SettingsWindowController?
 
     private let monitor = ClipboardMonitor()
 
@@ -41,6 +42,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         statusBar = StatusBarController(
             onOpen: { [weak self] in self?.panelController?.toggle() },
+            onSettings: { [weak self] in self?.showSettings() },
             onAccessibility: { PasteTarget.openAccessibilitySettings() },
             onQuit: { NSApp.terminate(nil) }
         )
@@ -48,7 +50,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         _ = GlobalHotKeyCenter.shared.register { [weak self] in
             self?.panelController?.toggle()
         }
-        keyboardRouter = KeyboardRouter(model: model, panel: panelController.panel)
+        keyboardRouter = KeyboardRouter(
+            model: model,
+            panel: panelController.panel,
+            onOpenSettings: { [weak self] in self?.showSettings() }
+        )
 
         model.startMonitoring()
         #if DEBUG
@@ -74,7 +80,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         GlobalHotKeyCenter.shared.unregister()
         monitor.stop()
         imagePreviewController?.close(restoringFocus: false)
+        settingsWindowController?.dismissForTermination()
         panelController?.persistNow()
+    }
+
+    private func showSettings() {
+        if settingsWindowController == nil {
+            settingsWindowController = SettingsWindowController { [weak self] in
+                self?.restorePaletteFocusAfterSettings()
+            }
+        }
+        settingsWindowController?.show()
+    }
+
+    private func restorePaletteFocusAfterSettings() {
+        guard let panel = panelController?.panel, panel.isVisible else { return }
+        NSApp.activate(ignoringOtherApps: true)
+        panel.makeKeyAndOrderFront(nil)
+        model?.refocusSearch()
+    }
+
+    @objc private func openSettings() {
+        showSettings()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -98,6 +125,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let appItem = NSMenuItem()
         let appMenu = NSMenu(title: "Paste")
         appMenu.addItem(withTitle: "关于 Paste", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        appMenu.addItem(.separator())
+        let settingsItem = appMenu.addItem(withTitle: "设置…", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "隐藏 Paste", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         appMenu.addItem(.separator())
@@ -187,6 +217,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             case "quick-folders":
                 model.setActiveTab(.quick)
                 model.setQuickFocusZone(.folders)
+            case "settings":
+                self.showSettings()
             default:
                 break
             }

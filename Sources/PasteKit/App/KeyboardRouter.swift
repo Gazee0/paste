@@ -10,6 +10,7 @@ import Carbon.HIToolbox
 final class KeyboardRouter {
     private let model: AppModel
     private let panel: NSPanel
+    private let onOpenSettings: () -> Void
     private var monitor: Any?
 
     /// Physical number-row key codes, so quick-paste works regardless of the active keyboard
@@ -26,9 +27,10 @@ final class KeyboardRouter {
         UInt16(kVK_ANSI_9): 9,
     ]
 
-    init(model: AppModel, panel: NSPanel) {
+    init(model: AppModel, panel: NSPanel, onOpenSettings: @escaping () -> Void) {
         self.model = model
         self.panel = panel
+        self.onOpenSettings = onOpenSettings
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self else { return event }
             return self.handle(event) ? nil : event
@@ -122,6 +124,10 @@ final class KeyboardRouter {
 
         // Command shortcuts.
         if flags == .command {
+            if event.keyCode == 43 { // ,
+                onOpenSettings()
+                return true
+            }
             if event.keyCode == 13 { // W
                 model.requestHide()
                 return true

@@ -6,11 +6,18 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let menu = NSMenu()
     private let onOpen: () -> Void
+    private let onSettings: () -> Void
     private let onAccessibility: () -> Void
     private let onQuit: () -> Void
 
-    init(onOpen: @escaping () -> Void, onAccessibility: @escaping () -> Void, onQuit: @escaping () -> Void) {
+    init(
+        onOpen: @escaping () -> Void,
+        onSettings: @escaping () -> Void,
+        onAccessibility: @escaping () -> Void,
+        onQuit: @escaping () -> Void
+    ) {
         self.onOpen = onOpen
+        self.onSettings = onSettings
         self.onAccessibility = onAccessibility
         self.onQuit = onQuit
         super.init()
@@ -29,6 +36,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let openItem = NSMenuItem(title: "打开 Paste", action: #selector(openPanel), keyEquivalent: "")
         openItem.target = self
         menu.addItem(openItem)
+        let settingsItem = NSMenuItem(title: "设置…", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+        menu.addItem(.separator())
         let accessItem = NSMenuItem(title: "辅助功能设置…", action: #selector(openAccessibility), keyEquivalent: "")
         accessItem.target = self
         menu.addItem(accessItem)
@@ -50,6 +61,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     @objc private func openPanel() {
         onOpen()
+    }
+
+    @objc private func openSettings() {
+        onSettings()
     }
 
     @objc private func openAccessibility() {

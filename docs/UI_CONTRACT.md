@@ -170,6 +170,13 @@ capsule or material with white/primary text, 11pt; optional action button if
 `toast.actionTitle != nil` calling `model.performToastAction()`; tap/close dismisses via
 `model.dismissToast()`. Animate with opacity/offset. Don't let it block row interaction.
 
+## Settings window
+
+A separate 620×700 borderless settings panel is opened from the menu-bar menu, the app menu, or
+`⌘,`. It contains a grouped shortcut reference (global, window/search, clipboard, quick tab,
+text editing, preview/large image, menu bar) plus the data-directory footer. It is not part of
+the palette and does not affect palette geometry.
+
 ## Quick tab
 
 - Tab bar switches between clipboard history and quick snippets with Tab / ⇧Tab.
