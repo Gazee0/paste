@@ -91,13 +91,6 @@ final class KeyboardRouter {
         // the keyboard. Only Escape (above) remains a palette shortcut.
         if panel.firstResponder is PreviewTextView { return false }
 
-        // Shift+Space is the preview shortcut when the search field needs plain Space for
-        // typing multi-word queries.
-        if event.keyCode == 49, flags == .shift {
-            guard !event.isARepeat else { return true }
-            model.togglePreview()
-            return true
-        }
 
         // Left/right switch the kind filter while the search query is empty. With a query,
         // arrows keep their normal text-caret behavior; clear the query (Esc) to switch again.
@@ -124,7 +117,7 @@ final class KeyboardRouter {
 
         // Command shortcuts.
         if flags == .command {
-            if event.keyCode == UInt16(kVK_ANSI_LeftBracket) { // [
+            if event.keyCode == 123 { // ⌘←
                 if model.activeTab == .quick {
                     model.cycleQuickFolder(by: -1)
                 } else {
@@ -132,11 +125,23 @@ final class KeyboardRouter {
                 }
                 return true
             }
-            if event.keyCode == UInt16(kVK_ANSI_RightBracket) { // ]
+            if event.keyCode == 124 { // ⌘→
                 if model.activeTab == .quick {
                     model.cycleQuickFolder(by: 1)
                 } else {
                     model.cycleHistoryFilter(by: 1)
+                }
+                return true
+            }
+            if event.keyCode == 126 { // ⌘↑
+                if !model.isPreviewOpen {
+                    model.togglePreview()
+                }
+                return true
+            }
+            if event.keyCode == 125 { // ⌘↓
+                if model.isPreviewOpen {
+                    model.closePreview()
                 }
                 return true
             }
