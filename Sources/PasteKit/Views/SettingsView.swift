@@ -242,16 +242,5 @@ enum ShortcutCatalog {
             ShortcutItem("粘贴第 1–9 条", [["⌘", "1–9"]]),
             ShortcutItem("粘贴条目 / 打开菜单", [["双击"], ["右键"]]),
         ]),
-        ShortcutSection(title: "预览与大图", systemImage: "photo", items: [
-            ShortcutItem("关闭大图窗口", [["Esc"], ["⌘", "W"]]),
-            ShortcutItem("适应窗口 / 实际大小", [["双击"]]),
-            ShortcutItem("缩放 / 平移", [["捏合"], ["拖拽"]], detail: "触控板或鼠标"),
-            ShortcutItem("从预览打开大图", [["点击图片"]]),
-            ShortcutItem("打开 / 关闭预览", [["点击眼睛"]]),
-        ]),
-        ShortcutSection(title: "菜单栏", systemImage: "menubar.rectangle", items: [
-            ShortcutItem("打开 / 关闭 Paste", [["单击图标"]]),
-            ShortcutItem("显示菜单", [["右键图标"]]),
-        ]),
     ]
 }
