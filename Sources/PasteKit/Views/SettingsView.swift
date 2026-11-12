@@ -236,8 +236,6 @@ enum ShortcutCatalog {
         ]),
         ShortcutSection(title: "快贴", systemImage: "bolt", items: [
             ShortcutItem("进入文件夹区 / 返回列表区", [["←"], ["→"]], detail: "搜索框为空时"),
-            ShortcutItem("在文件夹区上移 / 下移", [["↑"], ["↓"]]),
-            ShortcutItem("文件夹区返回列表区", [["↩"]]),
         ]),
     ]
 }
