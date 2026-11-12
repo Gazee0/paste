@@ -218,10 +218,6 @@ enum ShortcutCatalog {
     static let sections: [ShortcutSection] = [
         ShortcutSection(title: "全局", systemImage: "globe", items: [
             ShortcutItem("打开 / 隐藏 Paste", [["⌥", "V"]]),
-            ShortcutItem("打开设置", [["⌘", ","]]),
-            ShortcutItem("关闭设置窗口", [["Esc"], ["⌘", "W"]]),
-            ShortcutItem("隐藏 Paste", [["⌘", "H"]]),
-            ShortcutItem("退出 Paste", [["⌘", "Q"]]),
         ]),
         ShortcutSection(title: "窗口与搜索", systemImage: "macwindow", items: [
             ShortcutItem("关闭面板", [["⌘", "W"]]),
