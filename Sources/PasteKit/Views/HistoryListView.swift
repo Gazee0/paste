@@ -23,7 +23,7 @@ struct HistoryListHeader: View {
                         .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 }
                 .buttonStyle(.plain)
-                .help("筛选：\(filter.title)")
+                .help("筛选：\(filter.title)（⌘[ / ⌘] 切换）")
             }
             Spacer(minLength: 0)
         }

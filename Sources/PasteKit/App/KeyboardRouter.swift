@@ -124,6 +124,22 @@ final class KeyboardRouter {
 
         // Command shortcuts.
         if flags == .command {
+            if event.keyCode == UInt16(kVK_ANSI_LeftBracket) { // [
+                if model.activeTab == .quick {
+                    model.cycleQuickFolder(by: -1)
+                } else {
+                    model.cycleHistoryFilter(by: -1)
+                }
+                return true
+            }
+            if event.keyCode == UInt16(kVK_ANSI_RightBracket) { // ]
+                if model.activeTab == .quick {
+                    model.cycleQuickFolder(by: 1)
+                } else {
+                    model.cycleHistoryFilter(by: 1)
+                }
+                return true
+            }
             if event.keyCode == 43 { // ,
                 onOpenSettings()
                 return true

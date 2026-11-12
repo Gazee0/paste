@@ -225,6 +225,7 @@ enum ShortcutCatalog {
         ]),
         ShortcutSection(title: "通用（剪贴板与快贴）", systemImage: "square.grid.2x2", items: [
             ShortcutItem("在列表区上移 / 下移选择", [["↑"], ["↓"]]),
+            ShortcutItem("上一个 / 下一个筛选项", [["⌘", "["], ["⌘", "]"]], detail: "剪贴板切换类型；快贴切换文件夹，搜索框有内容时也可用"),
             ShortcutItem("打开 / 关闭预览", [["Space"]], detail: "搜索框为空时"),
             ShortcutItem("随时打开 / 关闭预览", [["⇧", "Space"]]),
             ShortcutItem("粘贴选中条目", [["↩"]]),
