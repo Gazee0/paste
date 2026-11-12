@@ -242,12 +242,6 @@ enum ShortcutCatalog {
             ShortcutItem("粘贴第 1–9 条", [["⌘", "1–9"]]),
             ShortcutItem("粘贴条目 / 打开菜单", [["双击"], ["右键"]]),
         ]),
-        ShortcutSection(title: "编辑文本", systemImage: "text.cursor", items: [
-            ShortcutItem("撤销 / 重做", [["⌘", "Z"], ["⇧", "⌘", "Z"]]),
-            ShortcutItem("剪切 / 拷贝 / 粘贴", [["⌘", "X"], ["⌘", "C"], ["⌘", "V"]]),
-            ShortcutItem("全选", [["⌘", "A"]]),
-            ShortcutItem("快贴编辑器：取消 / 保存", [["Esc"], ["↩"]]),
-        ]),
         ShortcutSection(title: "预览与大图", systemImage: "photo", items: [
             ShortcutItem("关闭大图窗口", [["Esc"], ["⌘", "W"]]),
             ShortcutItem("适应窗口 / 实际大小", [["双击"]]),
