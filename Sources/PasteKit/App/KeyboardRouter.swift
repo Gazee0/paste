@@ -115,9 +115,11 @@ final class KeyboardRouter {
             }
         }
 
-        // Command shortcuts.
-        if flags == .command {
-            if event.keyCode == 123 { // ⌘←
+        // Option+arrows are the palette's direct filter/preview shortcuts. They stay
+        // independent of the caret position, so they work while the search field has text.
+        // Plain arrows keep their native text-caret behavior.
+        if flags == .option {
+            if event.keyCode == 123 { // ⌥←
                 if model.activeTab == .quick {
                     model.cycleQuickFolder(by: -1)
                 } else {
@@ -125,7 +127,7 @@ final class KeyboardRouter {
                 }
                 return true
             }
-            if event.keyCode == 124 { // ⌘→
+            if event.keyCode == 124 { // ⌥→
                 if model.activeTab == .quick {
                     model.cycleQuickFolder(by: 1)
                 } else {
@@ -133,18 +135,15 @@ final class KeyboardRouter {
                 }
                 return true
             }
-            if event.keyCode == 126 { // ⌘↑
-                if !model.isPreviewOpen {
-                    model.togglePreview()
-                }
+            if event.keyCode == 49 { // ⌥Space
+                guard !event.isARepeat else { return true }
+                model.togglePreview()
                 return true
             }
-            if event.keyCode == 125 { // ⌘↓
-                if model.isPreviewOpen {
-                    model.closePreview()
-                }
-                return true
-            }
+        }
+
+        // Command shortcuts.
+        if flags == .command {
             if event.keyCode == 43 { // ,
                 onOpenSettings()
                 return true

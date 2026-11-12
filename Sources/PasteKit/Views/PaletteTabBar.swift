@@ -50,7 +50,7 @@ struct PaletteTabBar: View {
     private var previewButton: some View {
         PanelIconButton(
             systemName: "eye",
-            help: "预览（空格 / ⇧空格）",
+            help: "预览（空格 / ⌥Space）",
             iconSize: 11,
             iconOffsetY: -1,
             tint: model.isPreviewVisible ? .accentColor : nil,
