@@ -92,25 +92,16 @@ final class KeyboardRouter {
         if panel.firstResponder is PreviewTextView { return false }
 
 
-        // Left/right switch the kind filter while the search query is empty. With a query,
-        // arrows keep their normal text-caret behavior; clear the query (Esc) to switch again.
-        if flags.isEmpty, !model.isSearching {
+        // In the quick tab, empty-search left/right move focus between the folder sidebar and
+        // the snippet list. Elsewhere plain arrows always belong to the search field's caret;
+        // filter changes use Option+arrows.
+        if flags.isEmpty, !model.isSearching, model.activeTab == .quick {
             if event.keyCode == 123 { // ←
-                if model.activeTab == .quick {
-                    // ← moves focus from the snippet list into the folder sidebar.
-                    model.setQuickFocusZone(.folders)
-                } else {
-                    model.cycleHistoryFilter(by: -1)
-                }
+                model.setQuickFocusZone(.folders)
                 return true
             }
             if event.keyCode == 124 { // →
-                if model.activeTab == .quick {
-                    // → returns focus from the folder sidebar to the snippet list.
-                    model.setQuickFocusZone(.list)
-                } else {
-                    model.cycleHistoryFilter(by: 1)
-                }
+                model.setQuickFocusZone(.list)
                 return true
             }
         }

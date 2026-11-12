@@ -232,9 +232,6 @@ enum ShortcutCatalog {
             ShortcutItem("粘贴第 1–9 条", [["⌘", "1–9"]]),
             ShortcutItem("粘贴条目 / 打开菜单", [["双击"], ["右键"]]),
         ]),
-        ShortcutSection(title: "剪贴板", systemImage: "doc.on.clipboard", items: [
-            ShortcutItem("切换类型筛选", [["←"], ["→"]], detail: "搜索框为空时"),
-        ]),
         ShortcutSection(title: "快贴", systemImage: "bolt", items: [
             ShortcutItem("进入文件夹区 / 返回列表区", [["←"], ["→"]], detail: "搜索框为空时"),
         ]),
